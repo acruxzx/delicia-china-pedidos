@@ -70,8 +70,16 @@ async function iniciar() {
   $('#form-ingreso').addEventListener('submit', entrar);
   activarEventos();
 
-  if (await sesionActiva()) await abrirTrabajo();
-  else mostrarPantalla('ingreso');
+  try {
+    if (await sesionActiva()) await abrirTrabajo();
+    else mostrarPantalla('ingreso');
+  } catch (err) {
+    console.error(err);
+    mostrarPantalla('ingreso');
+    const error = $('#error-ingreso');
+    error.textContent = 'No se pudo conectar con el servidor. Revisa la conexión a internet y recarga la página.';
+    error.hidden = false;
+  }
 }
 
 function mostrarPantalla(p) {

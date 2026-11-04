@@ -4,7 +4,7 @@
 import { CONFIG } from './config.js';
 import { agregarPedidoDemo, imagenLiviana, leerTiendaDemo } from './demo.js';
 
-const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.9/+esm';
 
 let clienteSupabase = null;
 

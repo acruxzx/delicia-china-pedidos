@@ -6,10 +6,11 @@ export const CONFIG = {
   nombre: 'Delicia China',
   lema: 'El sabor tradicional de China en Piedecuesta',
 
-  // Supabase: se llenan al crear el proyecto gratuito.
-  // La "anon key" es pública por diseño; la seguridad la dan las reglas (RLS).
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  // Supabase. La clave "publishable" es pública por diseño: la seguridad la dan
+  // las reglas de la base de datos (RLS). Nunca poner aquí la clave "secret".
+  // Para volver al modo demo, deja ambos valores vacíos.
+  supabaseUrl: 'https://oycremitolvivjyoltfn.supabase.co',
+  supabaseAnonKey: 'sb_publishable_ECIoOhOUFx08viqrA_pY-w_OjVAUIQW',
 
   // Valores de ejemplo para el modo demo. Con Supabase, salen de la tabla "configuracion".
   demo: {
