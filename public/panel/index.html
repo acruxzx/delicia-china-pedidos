@@ -73,6 +73,14 @@
 
       <div class="cuerpo-panel">
         <aside class="columna-lista" aria-label="Pedidos">
+          <div class="buscar-pedido">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
+              <path d="M16.5 16.5 21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <label class="solo-lector" for="buscar-pedido">Buscar pedido</label>
+            <input id="buscar-pedido" type="search" placeholder="Buscar # de pedido, nombre o celular" autocomplete="off" />
+          </div>
           <div class="filtros" role="tablist" aria-label="Filtrar pedidos">
             <button type="button" role="tab" class="filtro" data-filtro="revisar" aria-selected="true">
               Por revisar <span class="cuenta" data-cuenta="revisar">0</span>

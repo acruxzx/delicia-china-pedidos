@@ -232,6 +232,48 @@ body.panel[data-pantalla='trabajo'] #trabajo {
 
 /* ---------- Filtros y lista ---------- */
 
+.buscar-pedido {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 12px 12px 0 max(12px, env(safe-area-inset-left, 0px));
+}
+
+.buscar-pedido svg {
+  position: absolute;
+  left: max(26px, calc(env(safe-area-inset-left, 0px) + 14px));
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+
+.buscar-pedido input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px 0 40px;
+  border-radius: 999px;
+  border: 1px solid var(--filete);
+  background: var(--laca);
+  color: var(--texto);
+  font-size: 1rem;
+}
+
+.buscar-pedido input::placeholder {
+  color: var(--texto-suave);
+}
+
+.buscar-pedido input:focus-visible {
+  outline: none;
+  border-color: var(--oro);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--oro) 25%, transparent);
+}
+
+body.buscando-pedido .filtro[aria-selected='true'] {
+  background: transparent;
+  border-color: var(--filete);
+  color: var(--texto-suave);
+}
+
 .filtros {
   flex: none;
   display: flex;

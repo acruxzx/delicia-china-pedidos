@@ -9,6 +9,7 @@ import {
   escucharCambios,
   iniciarSesion,
   leerTienda,
+  buscarPedidoPorCodigo,
   listarPedidos,
   modoDemo,
   sesionActiva,
@@ -54,6 +55,7 @@ const estado = {
   rechazando: false,
   mensajeEditado: false,
   costoDomicilio: '',
+  busqueda: '',
 };
 
 /* ---------- Arranque ---------- */
@@ -187,17 +189,24 @@ function pintarLista() {
   }
   document.querySelectorAll('.filtro').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.filtro === estado.filtro)));
 
-  const lista = pedidosDelFiltro(estado.filtro).sort((a, b) =>
-    estado.filtro === 'finalizados' ? b.actualizadoEn.localeCompare(a.actualizadoEn) : a.creadoEn.localeCompare(b.creadoEn),
-  );
+  const buscando = Boolean(estado.busqueda);
+  document.body.classList.toggle('buscando-pedido', buscando);
+
+  const lista = buscando
+    ? estado.pedidos.filter(coincideBusqueda).sort((a, b) => b.creadoEn.localeCompare(a.creadoEn))
+    : pedidosDelFiltro(estado.filtro).sort((a, b) =>
+        estado.filtro === 'finalizados' ? b.actualizadoEn.localeCompare(a.actualizadoEn) : a.creadoEn.localeCompare(b.creadoEn),
+      );
 
   const vacia = $('#lista-vacia');
   vacia.hidden = lista.length > 0;
-  vacia.textContent = {
-    revisar: 'No hay pagos por revisar. Los pedidos nuevos aparecen aquí.',
-    curso: 'No hay pedidos en preparación ni en camino.',
-    finalizados: 'Todavía no hay pedidos finalizados.',
-  }[estado.filtro];
+  vacia.textContent = buscando
+    ? `No hay pedidos que coincidan con “${estado.busqueda}”.`
+    : {
+        revisar: 'No hay pagos por revisar. Los pedidos nuevos aparecen aquí.',
+        curso: 'No hay pedidos en preparación ni en camino.',
+        finalizados: 'Todavía no hay pedidos finalizados.',
+      }[estado.filtro];
 
   $('#lista-pedidos').innerHTML = lista
     .map((p) => {
@@ -218,7 +227,7 @@ function pintarLista() {
               <span class="tp-entrega">${p.tipoEntrega === 'domicilio' ? 'Domicilio' : 'Recoger'} · ${unidades} ${unidades === 1 ? 'producto' : 'productos'}</span>
               <strong class="tp-total">${pesos.format(p.total)}</strong>
             </span>
-            ${estado.filtro === 'revisar' ? '' : `<span class="pastilla-estado ${e.clase}">${e.texto}</span>`}
+            ${estado.filtro === 'revisar' && !buscando ? '' : `<span class="pastilla-estado ${e.clase}">${e.texto}</span>`}
           </button>
         </li>`;
     })
@@ -226,6 +235,45 @@ function pintarLista() {
 
   const nuevos = estado.pedidos.filter(esNuevo).length;
   document.title = nuevos ? `(${nuevos}) Pedidos nuevos · Delicia China` : 'Panel · Delicia China';
+}
+
+/* ---------- Búsqueda ---------- */
+
+// Acepta "#104", "104", parte del nombre o del celular.
+function coincideBusqueda(p) {
+  const q = normalizar(estado.busqueda).replace(/^#/, '').trim();
+  if (!q) return true;
+  const digitos = q.replace(/\s/g, '');
+  if (/^\d+$/.test(digitos)) {
+    return String(p.codigo) === digitos || (digitos.length >= 4 && p.telefono.includes(digitos));
+  }
+  return q.split(/\s+/).every((t) => normalizar(p.nombre).includes(t));
+}
+
+let temporizadorBusqueda;
+function buscar(texto) {
+  estado.busqueda = texto.trim();
+  pintarLista();
+  // Si es un número de pedido que no está cargado (más de 3 días), se busca en el servidor.
+  clearTimeout(temporizadorBusqueda);
+  const codigo = estado.busqueda.replace(/^#/, '').trim();
+  if (!/^\d+$/.test(codigo) || estado.pedidos.some((p) => String(p.codigo) === codigo)) return;
+  temporizadorBusqueda = setTimeout(async () => {
+    try {
+      const p = await buscarPedidoPorCodigo(Number(codigo));
+      if (p && !estado.pedidos.some((x) => x.id === p.id)) {
+        estado.pedidos.push(p);
+        estado.conocidos?.add(p.id);
+        pintarLista();
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  }, 400);
+}
+
+function normalizar(texto) {
+  return String(texto ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 /* ---------- Detalle ---------- */
@@ -594,7 +642,18 @@ function activarEventos() {
     const b = e.target.closest('.filtro');
     if (!b) return;
     estado.filtro = b.dataset.filtro;
+    if (estado.busqueda) {
+      $('#buscar-pedido').value = '';
+      estado.busqueda = '';
+    }
     pintarLista();
+  });
+
+  $('#buscar-pedido').addEventListener('input', (e) => buscar(e.target.value));
+  $('#buscar-pedido').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const primero = document.querySelector('.tarjeta-pedido');
+    if (primero) seleccionar(primero.dataset.id);
   });
 
   $('#detalle').addEventListener('click', (e) => {

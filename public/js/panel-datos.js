@@ -112,6 +112,15 @@ function desdeFila(f) {
   };
 }
 
+// Para buscar pedidos viejos que no están en la lista cargada.
+export async function buscarPedidoPorCodigo(codigo) {
+  if (modoDemo()) return (leerPedidosDemo() ?? []).find((p) => p.codigo === codigo) ?? null;
+  const sb = await obtenerSupabase();
+  const { data, error } = await sb.from('pedidos').select('*, pedido_items(*)').eq('codigo', codigo).maybeSingle();
+  if (error) throw error;
+  return data ? desdeFila(data) : null;
+}
+
 export async function cambiarEstado(id, estado, motivoRechazo = null) {
   if (modoDemo()) {
     actualizarPedidoDemo(id, { estado, motivoRechazo });
