@@ -1,0 +1,90 @@
+{
+  "restaurante": "Delicia China",
+  "lema": "El sabor tradicional de China en Piedecuesta",
+  "moneda": "COP",
+  "nota": "DATOS GENÉRICOS DE EJEMPLO. Los platos y precios son de relleno para el piloto; se reemplazan por los reales si el dueño acepta.",
+  "opcionesGenerales": ["Sin cebolla", "Sin picante", "Salsa aparte", "Porción extra de arroz"],
+  "categorias": [
+    "Entradas", "Sopas", "Arroces", "Chop Suey", "Chow Mein", "Pollo", "Cerdo", "Res",
+    "Camarones y mariscos", "Combos", "Acompañamientos", "Bebidas", "Postres"
+  ],
+  "platos": [
+    {"id": 1, "categoria": "Entradas", "nombre": "Rollitos primavera (x3)", "descripcion": "Rollos crocantes rellenos de verduras.", "precio": 12000},
+    {"id": 2, "categoria": "Entradas", "nombre": "Wantán frito (x6)", "descripcion": "Masa crocante rellena de cerdo, con salsa agridulce.", "precio": 14000},
+    {"id": 3, "categoria": "Entradas", "nombre": "Empanadas chinas (x4)", "descripcion": "Empanadas de pollo y vegetales.", "precio": 13000},
+    {"id": 4, "categoria": "Entradas", "nombre": "Costillitas BBQ", "descripcion": "Costillas de cerdo glaseadas en salsa BBQ.", "precio": 22000},
+    {"id": 5, "categoria": "Entradas", "nombre": "Alitas agridulces (x6)", "descripcion": "Alitas fritas bañadas en salsa agridulce.", "precio": 20000},
+    {"id": 6, "categoria": "Entradas", "nombre": "Camarones apanados (x5)", "descripcion": "Camarones fritos con salsa de la casa.", "precio": 24000},
+
+    {"id": 7, "categoria": "Sopas", "nombre": "Sopa wantán", "descripcion": "Caldo de pollo con wantanes de cerdo.", "precio": 16000},
+    {"id": 8, "categoria": "Sopas", "nombre": "Sopa de pollo con vegetales", "descripcion": "Caldo ligero con pollo y verduras.", "precio": 14000},
+    {"id": 9, "categoria": "Sopas", "nombre": "Sopa de maíz tierno con pollo", "descripcion": "Crema suave de maíz con hilos de huevo.", "precio": 15000},
+    {"id": 10, "categoria": "Sopas", "nombre": "Sopa agridulce", "descripcion": "Caldo espeso, picante suave, con cerdo y huevo.", "precio": 15000},
+    {"id": 11, "categoria": "Sopas", "nombre": "Sopa de mariscos", "descripcion": "Caldo con camarones y pescado.", "precio": 24000},
+
+    {"id": 12, "categoria": "Arroces", "nombre": "Arroz chino especial", "descripcion": "Arroz frito con pollo, cerdo, jamón y huevo.", "precio": 22000},
+    {"id": 13, "categoria": "Arroces", "nombre": "Arroz con pollo", "descripcion": "Arroz frito con pollo y verduras.", "precio": 18000},
+    {"id": 14, "categoria": "Arroces", "nombre": "Arroz con cerdo", "descripcion": "Arroz frito con cerdo asado y huevo.", "precio": 18000},
+    {"id": 15, "categoria": "Arroces", "nombre": "Arroz con res", "descripcion": "Arroz frito con tiras de res.", "precio": 20000},
+    {"id": 16, "categoria": "Arroces", "nombre": "Arroz con camarones", "descripcion": "Arroz frito con camarones y cebollín.", "precio": 24000},
+    {"id": 17, "categoria": "Arroces", "nombre": "Arroz mixto", "descripcion": "Arroz frito con pollo, res, cerdo y camarones.", "precio": 25000},
+    {"id": 18, "categoria": "Arroces", "nombre": "Arroz frito vegetariano", "descripcion": "Arroz con huevo y vegetales.", "precio": 15000},
+
+    {"id": 19, "categoria": "Chop Suey", "nombre": "Chop suey de pollo", "descripcion": "Verduras salteadas con pollo.", "precio": 20000},
+    {"id": 20, "categoria": "Chop Suey", "nombre": "Chop suey de cerdo", "descripcion": "Verduras salteadas con cerdo.", "precio": 20000},
+    {"id": 21, "categoria": "Chop Suey", "nombre": "Chop suey de res", "descripcion": "Verduras salteadas con res.", "precio": 22000},
+    {"id": 22, "categoria": "Chop Suey", "nombre": "Chop suey de camarones", "descripcion": "Verduras salteadas con camarones.", "precio": 26000},
+    {"id": 23, "categoria": "Chop Suey", "nombre": "Chop suey mixto", "descripcion": "Verduras con pollo, res, cerdo y camarones.", "precio": 27000},
+    {"id": 24, "categoria": "Chop Suey", "nombre": "Chop suey vegetariano", "descripcion": "Variedad de verduras salteadas al wok.", "precio": 17000},
+
+    {"id": 25, "categoria": "Chow Mein", "nombre": "Chow mein de pollo", "descripcion": "Tallarines salteados con pollo y verduras.", "precio": 20000},
+    {"id": 26, "categoria": "Chow Mein", "nombre": "Chow mein de cerdo", "descripcion": "Tallarines salteados con cerdo.", "precio": 20000},
+    {"id": 27, "categoria": "Chow Mein", "nombre": "Chow mein de res", "descripcion": "Tallarines salteados con res.", "precio": 22000},
+    {"id": 28, "categoria": "Chow Mein", "nombre": "Chow mein de camarones", "descripcion": "Tallarines salteados con camarones.", "precio": 26000},
+    {"id": 29, "categoria": "Chow Mein", "nombre": "Chow mein mixto", "descripcion": "Tallarines con pollo, res, cerdo y camarones.", "precio": 27000},
+    {"id": 30, "categoria": "Chow Mein", "nombre": "Chow mein vegetariano", "descripcion": "Tallarines con vegetales.", "precio": 17000},
+
+    {"id": 31, "categoria": "Pollo", "nombre": "Pollo agridulce", "descripcion": "Trozos de pollo apanado en salsa agridulce.", "precio": 24000},
+    {"id": 32, "categoria": "Pollo", "nombre": "Pollo con almendras", "descripcion": "Pollo salteado con almendras y verduras.", "precio": 25000},
+    {"id": 33, "categoria": "Pollo", "nombre": "Pollo con champiñones", "descripcion": "Pollo en salsa suave con champiñones.", "precio": 24000},
+    {"id": 34, "categoria": "Pollo", "nombre": "Pollo al limón", "descripcion": "Pollo crocante con salsa cítrica.", "precio": 24000},
+    {"id": 35, "categoria": "Pollo", "nombre": "Pollo en salsa de ostras", "descripcion": "Pollo salteado con salsa de ostras.", "precio": 24000},
+    {"id": 36, "categoria": "Pollo", "nombre": "Pollo con verduras al wok", "descripcion": "Pollo con brócoli, zanahoria y pimentón.", "precio": 23000},
+
+    {"id": 37, "categoria": "Cerdo", "nombre": "Cerdo agridulce", "descripcion": "Cerdo apanado en salsa agridulce.", "precio": 24000},
+    {"id": 38, "categoria": "Cerdo", "nombre": "Costilla BBQ (plato)", "descripcion": "Costillas glaseadas con arroz.", "precio": 28000},
+    {"id": 39, "categoria": "Cerdo", "nombre": "Cerdo con piña", "descripcion": "Cerdo salteado con piña y pimentón.", "precio": 24000},
+    {"id": 40, "categoria": "Cerdo", "nombre": "Cerdo en salsa de soya", "descripcion": "Cerdo salteado con salsa de soya y cebollín.", "precio": 23000},
+
+    {"id": 41, "categoria": "Res", "nombre": "Res con brócoli", "descripcion": "Tiras de res salteadas con brócoli.", "precio": 27000},
+    {"id": 42, "categoria": "Res", "nombre": "Res en salsa de ostras", "descripcion": "Res tierna en salsa de ostras.", "precio": 27000},
+    {"id": 43, "categoria": "Res", "nombre": "Res con pimentón", "descripcion": "Res salteada con pimentón y cebolla.", "precio": 26000},
+    {"id": 44, "categoria": "Res", "nombre": "Res mongoliana", "descripcion": "Res crocante con salsa dulce y picante suave.", "precio": 28000},
+
+    {"id": 45, "categoria": "Camarones y mariscos", "nombre": "Camarones al ajillo", "descripcion": "Camarones salteados con ajo y cebollín.", "precio": 32000},
+    {"id": 46, "categoria": "Camarones y mariscos", "nombre": "Camarones agridulces", "descripcion": "Camarones apanados en salsa agridulce.", "precio": 32000},
+    {"id": 47, "categoria": "Camarones y mariscos", "nombre": "Camarones con vegetales", "descripcion": "Camarones con brócoli y zanahoria.", "precio": 31000},
+    {"id": 48, "categoria": "Camarones y mariscos", "nombre": "Mariscos salteados", "descripcion": "Mezcla de mariscos con verduras.", "precio": 34000},
+
+    {"id": 49, "categoria": "Combos", "nombre": "Combo personal", "descripcion": "Arroz chino, pollo agridulce y rollito primavera.", "precio": 28000},
+    {"id": 50, "categoria": "Combos", "nombre": "Combo pareja", "descripcion": "2 arroces, 2 platos fuertes y 6 rollitos.", "precio": 58000},
+    {"id": 51, "categoria": "Combos", "nombre": "Combo familiar (4 personas)", "descripcion": "2 arroces, chop suey, 2 platos fuertes y bebida 1.5 L.", "precio": 110000},
+    {"id": 52, "categoria": "Combos", "nombre": "Combo almuerzo", "descripcion": "Sopa, arroz con pollo y bebida.", "precio": 22000},
+
+    {"id": 53, "categoria": "Acompañamientos", "nombre": "Arroz blanco", "descripcion": "Porción de arroz blanco.", "precio": 5000},
+    {"id": 54, "categoria": "Acompañamientos", "nombre": "Salsa agridulce extra", "descripcion": "Porción adicional de salsa.", "precio": 2000},
+    {"id": 55, "categoria": "Acompañamientos", "nombre": "Salsa de soya extra", "descripcion": "Porción adicional de salsa de soya.", "precio": 1500},
+    {"id": 56, "categoria": "Acompañamientos", "nombre": "Papas fritas", "descripcion": "Porción de papas a la francesa.", "precio": 8000},
+
+    {"id": 57, "categoria": "Bebidas", "nombre": "Gaseosa personal", "descripcion": "Botella de 400 ml.", "precio": 4500},
+    {"id": 58, "categoria": "Bebidas", "nombre": "Gaseosa 1.5 L", "descripcion": "Botella familiar.", "precio": 9000},
+    {"id": 59, "categoria": "Bebidas", "nombre": "Jugo natural", "descripcion": "Jugo en agua o leche, según fruta disponible.", "precio": 6000},
+    {"id": 60, "categoria": "Bebidas", "nombre": "Té frío", "descripcion": "Té de limón o durazno.", "precio": 5000},
+    {"id": 61, "categoria": "Bebidas", "nombre": "Agua", "descripcion": "Botella de 600 ml.", "precio": 3500},
+    {"id": 62, "categoria": "Bebidas", "nombre": "Cerveza", "descripcion": "Botella nacional.", "precio": 6500},
+
+    {"id": 63, "categoria": "Postres", "nombre": "Helado frito", "descripcion": "Helado envuelto en masa crocante.", "precio": 9000},
+    {"id": 64, "categoria": "Postres", "nombre": "Bananos fritos con miel", "descripcion": "Banano apanado con miel.", "precio": 8000},
+    {"id": 65, "categoria": "Postres", "nombre": "Flan", "descripcion": "Flan casero con caramelo.", "precio": 7000}
+  ]
+}
