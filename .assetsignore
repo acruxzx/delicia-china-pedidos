@@ -1,7 +1,0 @@
-# Archivos del repositorio que no deben publicarse en la web
-.git
-.gitignore
-.assetsignore
-README.md
-CONTEXTO.md
-supabase/

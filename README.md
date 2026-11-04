@@ -20,38 +20,42 @@ el cliente pide desde el celular, sube el comprobante de pago y el local lo apru
 
 La web no necesita instalar nada, pero debe abrirse con un servidor local (abrir `index.html` con doble clic no carga el menú).
 
-**Opción A, VS Code:** instala la extensión *Live Server*, abre la carpeta y pulsa **Go Live**.
+**Opción A, VS Code:** instala la extensión *Live Server*, abre `public/index.html` y pulsa **Go Live**.
 
-**Opción B, Python:** en una terminal dentro de la carpeta:
+**Opción B, Python:** en una terminal dentro de la carpeta `public`:
 
 ```bash
 python -m http.server 8000
 ```
 
-y abre <http://localhost:8000> en el navegador. Para verlo como celular, usa las herramientas de desarrollo del navegador (F12) y el modo de dispositivo.
+y abre <http://localhost:8000> (la terminal debe estar dentro de la carpeta `public`) en el navegador. Para verlo como celular, usa las herramientas de desarrollo del navegador (F12) y el modo de dispositivo.
 
 ## Estructura
 
 ```
-delicia-china/
-├── index.html            Pantalla del cliente
-├── css/estilos.css       Estilos (negro y dorado, como el logo)
-├── js/
-│   ├── config.js         Nombre, datos de Supabase y valores del modo demo
-│   ├── datos.js          Lee el menú: de Supabase si está configurado, si no de data/menu.json
-│   ├── carrito.js        Carrito guardado en el navegador (cantidad, opciones y nota por plato)
-│   ├── checkout.js       Finalizar pedido: datos, entrega, pago, comprobante y confirmación
-│   └── app.js            Menú, búsqueda, categorías, carrito y cambio de vistas (#pedido, #listo)
-├── data/menu.json        Menú genérico de ejemplo
-├── img/                  Logo, ícono y favicon recortados del logo original
-└── supabase/
-    ├── 01-esquema.sql        Tablas, seguridad, función crear_pedido y bucket de comprobantes
-    └── 02-datos-ejemplo.sql  Configuración y menú de ejemplo
+delicia-china-pedidos/
+├── wrangler.jsonc            Configuración de Cloudflare: publica solo public/
+├── public/                   Todo lo que ve el cliente
+│   ├── index.html            Pantalla del cliente
+│   ├── css/estilos.css       Estilos (negro y dorado, como el logo)
+│   ├── js/
+│   │   ├── config.js         Nombre, datos de Supabase y valores del modo demo
+│   │   ├── datos.js          Lee el menú y envía pedidos (Supabase o modo demo)
+│   │   ├── carrito.js        Carrito guardado en el navegador (cantidad, opciones y nota)
+│   │   ├── checkout.js       Finalizar pedido: datos, entrega, pago, comprobante y confirmación
+│   │   └── app.js            Menú, búsqueda, categorías, carrito y vistas (#pedido, #listo)
+│   ├── data/menu.json        Menú genérico de ejemplo
+│   └── img/                  Logo, ícono y favicon
+├── supabase/
+│   ├── 01-esquema.sql        Tablas, seguridad, función crear_pedido y bucket de comprobantes
+│   └── 02-datos-ejemplo.sql  Configuración y menú de ejemplo
+├── README.md
+└── CONTEXTO.md               Decisiones y avance del piloto
 ```
 
 ## Modo demo y modo Supabase
 
-Mientras `supabaseUrl` y `supabaseAnonKey` estén vacíos en `js/config.js`, la web funciona sola con `data/menu.json`.
+Mientras `supabaseUrl` y `supabaseAnonKey` estén vacíos en `public/js/config.js`, la web funciona sola con `data/menu.json`.
 Al llenarlos, lee el menú y el estado de la tienda desde Supabase. Si Supabase falla, vuelve al menú de ejemplo.
 
 ## Base de datos (resumen)
@@ -82,4 +86,4 @@ Estados del pedido: `pago_por_revisar` → `en_preparacion` → `en_camino` o `l
 
 - `main`: versión estable, publicada en Cloudflare (enlace principal).
 - `desarrollo`: avances de cada semana. Cuando se aprueban, se pasan a `main`.
-- `.assetsignore` evita que README, CONTEXTO y los scripts SQL se publiquen en la web.
+- Cloudflare publica solo la carpeta `public/` (ver `wrangler.jsonc`); README, CONTEXTO y los scripts SQL no quedan en la web.

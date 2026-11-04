@@ -1,0 +1,11 @@
+// Configuración de Cloudflare Workers para el piloto Delicia China.
+// La web es solo archivos estáticos: se publica la carpeta ./public.
+{
+  "name": "delicia-china-pedidos",
+  "compatibility_date": "2026-11-03",
+  "assets": {
+    "directory": "./public"
+  },
+  // Requerido por `wrangler preview` (enlaces de prueba de otras ramas). Puede ir vacío.
+  "previews": {}
+}
