@@ -264,7 +264,7 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
     const wa = (datos.tienda.whatsappTienda ?? '').replace(/\D/g, '');
     const waVisible = wa.length === 12 ? `+57 ${wa.slice(2, 5)} ${wa.slice(5, 8)} ${wa.slice(8)}` : wa;
     f.listo.innerHTML = `
-      ${p.demo ? '<p class="aviso-listo-demo">Modo demo: este pedido no llegó al restaurante.</p>' : ''}
+      ${p.demo ? '<p class="aviso-listo-demo">Modo demo: este pedido solo quedó guardado en este navegador. Ábrelo en el panel (/panel) para verlo llegar.</p>' : ''}
       <p class="codigo">Pedido <strong>#${p.codigo}</strong></p>
       <ol class="pasos-estado" aria-label="Estado del pedido">
         <li class="actual">Revisando tu pago</li>

@@ -2,6 +2,7 @@
 // Con Supabase configurado se usa la base de datos; si no, el "modo demo" con data/menu.json.
 
 import { CONFIG } from './config.js';
+import { agregarPedidoDemo, imagenLiviana, leerTiendaDemo } from './demo.js';
 
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
 
@@ -83,7 +84,7 @@ async function menuLocal() {
       precio: p.precio,
     })),
     opciones: json.opcionesGenerales ?? [],
-    tienda: { ...CONFIG.demo },
+    tienda: leerTiendaDemo(),
   };
 }
 
@@ -100,10 +101,35 @@ export async function enviarPedido(pedido) {
   }));
 
   if (!supabaseConfigurado()) {
-    // Modo demo: no se guarda nada; se simula la espera de la red.
-    await new Promise((r) => setTimeout(r, 900));
+    // Modo demo: el pedido se guarda en este navegador para verlo en /panel.
+    await new Promise((r) => setTimeout(r, 700));
+    if (!leerTiendaDemo().recibiendoPedidos) {
+      throw new Error('El restaurante no está recibiendo pedidos en este momento.');
+    }
     const total = pedido.lineas.reduce((s, l) => s + l.plato.precio * l.cantidad, 0);
-    return { codigo: 100 + Math.floor(Math.random() * 900), total, demo: true };
+    const ahora = new Date().toISOString();
+    const guardado = agregarPedidoDemo({
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+      nombre: pedido.nombre,
+      telefono: pedido.telefono,
+      tipoEntrega: pedido.tipoEntrega,
+      direccion: pedido.direccion,
+      notas: pedido.notas,
+      metodoPago: pedido.metodoPago,
+      total,
+      estado: 'pago_por_revisar',
+      motivoRechazo: null,
+      items: pedido.lineas.map((l) => ({
+        nombre: l.plato.nombre,
+        cantidad: l.cantidad,
+        precio: l.plato.precio,
+        opciones: l.opciones,
+        nota: l.nota,
+      })),
+      comprobante: await imagenLiviana(pedido.comprobante.blob),
+    });
+    return { codigo: guardado.codigo, total, demo: true };
   }
 
   const sb = await obtenerSupabase();

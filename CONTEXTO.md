@@ -1,7 +1,7 @@
 # Piloto: app de pedidos para Delicia China (restaurante de comida china)
 
 Fecha del documento: 4 de noviembre de 2026
-Estado: semana 2 en la rama desarrollo (pedido completo en modo demo); falta conectar Supabase
+Estado: semanas 1 a 3 construidas en modo demo (menú, pedido y panel); falta conectar Supabase
 
 ## 1. Contexto
 
@@ -136,4 +136,16 @@ Propuesta de avance por semanas (a ajustar):
 - Envío real a Supabase ya programado (Storage + función `crear_pedido`); se activa al llenar `js/config.js`.
 - Pendiente: crear el proyecto de Supabase y probar un pedido real de punta a punta.
 
-**Siguiente: semana 3** — panel para tablet.
+**Ajuste de publicación**
+- Cloudflare ejecuta `wrangler preview`; se agregó `wrangler.jsonc` (con bloque `previews`) y la web pasó a `public/`. Solo esa carpeta se publica.
+- Deploy command de producción: `npx wrangler deploy`; ramas que no son producción: `npx wrangler preview`.
+
+**Semana 3: panel del restaurante (`/panel`)**
+- Pestañas Por revisar, En curso y Finalizados; marca de "Nuevo"; alerta sonora que se repite mientras haya pedidos sin abrir.
+- Detalle con comprobante ampliable; aprobar, rechazar con motivo (motivos rápidos), en camino o listo para recoger, entregado.
+- Mensaje de WhatsApp editable por estado, con costo opcional del domicilio; abre wa.me con el cliente.
+- Interruptor para abrir o cerrar la recepción, que se refleja en el menú del cliente.
+- Modo demo: la web y el panel comparten los pedidos en el mismo navegador; el panel trae tres pedidos de ejemplo y un botón "Simular pedido". Contraseña libre.
+- Con Supabase: ingreso con usuario del personal, pedidos en tiempo real y comprobantes con enlace firmado de una hora.
+
+**Siguiente: semana 4** — conectar Supabase, pruebas reales celular → tablet y guion de presentación al dueño.

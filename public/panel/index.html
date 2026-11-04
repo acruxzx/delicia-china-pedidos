@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Panel · Delicia China</title>
+    <meta name="theme-color" content="#131718" />
+    <link rel="icon" type="image/png" href="/img/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Marcellus&family=Figtree:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="/css/estilos.css" />
+    <link rel="stylesheet" href="/css/panel.css" />
+  </head>
+  <body class="panel" data-pantalla="cargando">
+    <!-- Ingreso -->
+    <section id="ingreso" class="ingreso" aria-labelledby="titulo-ingreso">
+      <img src="/img/icono.png" alt="" width="96" height="96" />
+      <h1 id="titulo-ingreso">Panel de pedidos</h1>
+      <p class="ingreso-sub">Delicia China · solo para el personal del restaurante</p>
+      <form id="form-ingreso" class="form-ingreso" novalidate>
+        <div class="campo" id="campo-correo">
+          <label for="i-correo">Correo</label>
+          <input id="i-correo" type="email" autocomplete="username" />
+        </div>
+        <div class="campo">
+          <label for="i-clave">Contraseña</label>
+          <input id="i-clave" type="password" autocomplete="current-password" />
+        </div>
+        <p id="error-ingreso" class="error-campo" role="alert" hidden></p>
+        <button id="entrar" type="submit" class="boton-principal">Entrar</button>
+        <p id="nota-demo-ingreso" class="nota centrada" hidden>Modo demo: escribe cualquier contraseña.</p>
+      </form>
+    </section>
+
+    <!-- Trabajo -->
+    <div id="trabajo" class="trabajo">
+      <header class="barra-panel">
+        <div class="marca">
+          <img src="/img/icono.png" alt="" width="40" height="40" />
+          <div>
+            <strong>Pedidos</strong>
+            <span id="etiqueta-demo" class="etiqueta-demo" hidden>Modo demo</span>
+          </div>
+        </div>
+
+        <button id="recepcion" type="button" class="interruptor" role="switch" aria-checked="true">
+          <span class="interruptor-pista" aria-hidden="true"><span></span></span>
+          <span id="texto-recepcion">Recibiendo pedidos</span>
+        </button>
+
+        <div class="acciones-barra">
+          <button id="sonido" type="button" class="boton-barra" aria-pressed="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" />
+              <path id="onda-sonido" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span id="texto-sonido">Activar sonido</span>
+          </button>
+          <button id="simular" type="button" class="boton-barra" hidden>Simular pedido</button>
+          <a class="boton-barra" href="/" target="_blank" rel="noopener">Ver menú</a>
+          <button id="salir" type="button" class="boton-barra">Salir</button>
+        </div>
+      </header>
+
+      <p id="aviso-cerrado-panel" class="aviso-cerrado-panel" hidden>
+        La recepción está cerrada: los clientes ven el menú pero no pueden pedir.
+      </p>
+
+      <div class="cuerpo-panel">
+        <aside class="columna-lista" aria-label="Pedidos">
+          <div class="filtros" role="tablist" aria-label="Filtrar pedidos">
+            <button type="button" role="tab" class="filtro" data-filtro="revisar" aria-selected="true">
+              Por revisar <span class="cuenta" data-cuenta="revisar">0</span>
+            </button>
+            <button type="button" role="tab" class="filtro" data-filtro="curso" aria-selected="false">
+              En curso <span class="cuenta" data-cuenta="curso">0</span>
+            </button>
+            <button type="button" role="tab" class="filtro" data-filtro="finalizados" aria-selected="false">
+              Finalizados <span class="cuenta" data-cuenta="finalizados">0</span>
+            </button>
+          </div>
+          <ul id="lista-pedidos" class="lista-pedidos"></ul>
+          <p id="lista-vacia" class="lista-vacia" hidden></p>
+        </aside>
+
+        <section id="detalle" class="columna-detalle" aria-live="polite">
+          <div class="detalle-vacio">
+            <p>Elige un pedido de la lista para ver el detalle y el comprobante.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Visor del comprobante -->
+    <div id="visor" class="visor" role="dialog" aria-modal="true" aria-label="Comprobante de pago" hidden>
+      <button id="cerrar-visor" type="button" class="cerrar" aria-label="Cerrar">×</button>
+      <img id="imagen-visor" alt="Comprobante de pago" />
+    </div>
+
+    <div id="aviso" class="toast" role="status" hidden></div>
+
+    <script type="module" src="/js/panel.js"></script>
+  </body>
+</html>

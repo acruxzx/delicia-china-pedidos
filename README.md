@@ -5,14 +5,25 @@ el cliente pide desde el celular, sube el comprobante de pago y el local lo apru
 
 > **Platos y precios de ejemplo.** El menú de `data/menu.json` es genérico. Se reemplaza por el real si el dueño acepta.
 
-## Estado: semana 2 en la rama `desarrollo`
+## Estado: semana 3 (panel del restaurante)
 
 - Menú por categorías (65 platos de ejemplo en 13 categorías) con barra de categorías que sigue el desplazamiento.
 - Búsqueda que ignora tildes y mayúsculas ("wantan" encuentra "Wantán").
 - Botón **Agregar** que se convierte en contador, y carrito que se conserva si se recarga la página.
 - Resumen del pedido con subtotal.
 - **Semana 2:** opciones y nota por plato (aplican a todas las unidades de ese plato), vista **Finalizar pedido** con datos del cliente, domicilio o recoger, medio de pago con número para copiar, subida del pantallazo del comprobante (se reduce a un JPG liviano) y pantalla **Pedido recibido**. La web recuerda nombre, celular y dirección del cliente para la próxima vez.
-- En modo demo el pedido no se guarda en ningún lado; la pantalla final lo dice.
+- **Semana 3: panel del restaurante en `/panel`**, pensado para tablet horizontal (también funciona en celular):
+  - Lista de pedidos en tres pestañas: **Por revisar**, **En curso** y **Finalizados**. Los que nadie ha abierto se marcan como **Nuevo**.
+  - **Alerta sonora** al llegar un pedido, que se repite cada 30 segundos mientras haya pedidos nuevos sin abrir. Se activa con el primer toque en la pantalla.
+  - Detalle con cliente, platos (con opciones y notas), total y **comprobante** (se amplía al tocarlo).
+  - **Aprobar** o **rechazar con motivo**, y luego **En camino** o **Listo para recoger**, y **Entregado**.
+  - **Mensaje de WhatsApp** listo para cada estado, editable, con campo opcional para el costo del domicilio. El botón abre el chat con el cliente; el empleado solo pulsa enviar.
+  - Interruptor para **abrir o cerrar la recepción** de pedidos.
+  - La pantalla se mantiene encendida mientras el panel está abierto (si el navegador lo permite).
+
+### Modo demo
+
+Sin Supabase, la web y el panel guardan los datos en el navegador. Para probar el ciclo completo, abre el menú y `/panel` **en el mismo navegador** (por ejemplo, dos pestañas): los pedidos que hagas en el menú llegan al panel. En el panel se entra con cualquier contraseña, empieza con tres pedidos de **ejemplo** y tiene un botón **Simular pedido** para mostrar la alerta. Entre dispositivos distintos (celular → tablet) solo funciona con Supabase.
 - Estado de la tienda: "Recibiendo pedidos" o "Cerrado por ahora" (si está cerrado, no se puede agregar).
 - Base de datos diseñada y probada para Supabase (`supabase/`).
 
@@ -38,12 +49,17 @@ delicia-china-pedidos/
 ├── public/                   Todo lo que ve el cliente
 │   ├── index.html            Pantalla del cliente
 │   ├── css/estilos.css       Estilos (negro y dorado, como el logo)
+│   ├── css/panel.css         Estilos del panel
 │   ├── js/
 │   │   ├── config.js         Nombre, datos de Supabase y valores del modo demo
 │   │   ├── datos.js          Lee el menú y envía pedidos (Supabase o modo demo)
 │   │   ├── carrito.js        Carrito guardado en el navegador (cantidad, opciones y nota)
 │   │   ├── checkout.js       Finalizar pedido: datos, entrega, pago, comprobante y confirmación
-│   │   └── app.js            Menú, búsqueda, categorías, carrito y vistas (#pedido, #listo)
+│   │   ├── app.js            Menú, búsqueda, categorías, carrito y vistas (#pedido, #listo)
+│   │   ├── demo.js           Almacén del modo demo, compartido por la web y el panel
+│   │   ├── panel-datos.js    Datos del panel: sesión, pedidos, estados, comprobantes, tienda
+│   │   └── panel.js          Pantalla del panel
+│   ├── panel/index.html      Panel del restaurante (/panel)
 │   ├── data/menu.json        Menú genérico de ejemplo
 │   └── img/                  Logo, ícono y favicon
 ├── supabase/
@@ -78,8 +94,7 @@ Estados del pedido: `pago_por_revisar` → `en_preparacion` → `en_camino` o `l
 
 ## Próximos pasos
 
-- **Pendiente de la semana 2:** crear el proyecto gratuito en Supabase, ejecutar los dos scripts SQL y poner la URL y la clave pública en `js/config.js`.
-- **Semana 3:** panel para tablet: lista de pedidos en tiempo real con alerta sonora, ver comprobante, aprobar o rechazar, botón de WhatsApp, abrir y cerrar pedidos.
+- **Pendiente:** crear el proyecto gratuito en Supabase, ejecutar los dos scripts SQL, poner la URL y la clave pública en `public/js/config.js` y crear el usuario del personal (Supabase → Authentication → Add user) para entrar al panel.
 - **Semana 4:** pruebas en celular y tablet, publicación en hosting gratuito y guion para presentarle el piloto al dueño.
 
 ## Ramas y publicación
