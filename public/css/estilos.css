@@ -1430,3 +1430,77 @@ body.tienda-cerrada .boton-principal:disabled {
 .contenido-listo a {
   color: var(--oro);
 }
+
+/* =====================================================================
+   Seguimiento del pedido
+   ===================================================================== */
+
+.seguimiento {
+  background: color-mix(in srgb, var(--jade) 16%, var(--tinta));
+  border-bottom: 1px solid color-mix(in srgb, var(--jade) 45%, transparent);
+}
+
+.seguimiento[data-estado='rechazado'] {
+  background: color-mix(in srgb, var(--rojo-laca) 20%, var(--tinta));
+  border-bottom-color: color-mix(in srgb, var(--rojo-laca) 50%, transparent);
+}
+
+.seguimiento-interior {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.seguimiento-enlace {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding-block: 10px;
+  color: var(--texto);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.seguimiento-ver {
+  color: var(--oro);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.seguimiento-cerrar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.pasos-estado {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.pasos-estado li.hecho {
+  border-top-color: color-mix(in srgb, var(--oro) 55%, var(--filete));
+  color: var(--texto);
+}
+
+.mensaje-estado {
+  font-size: 1.0625rem;
+}
+
+.estado-rechazado {
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--rojo-laca);
+  color: #f08a7e;
+  font-weight: 700;
+}

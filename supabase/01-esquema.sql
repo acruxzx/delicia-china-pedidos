@@ -208,6 +208,29 @@ revoke all on function public.crear_pedido(text, text, text, text, text, text, t
 grant execute on function public.crear_pedido(text, text, text, text, text, text, text, jsonb) to anon, authenticated;
 
 
+-- Seguimiento: el cliente consulta el estado de SU pedido por el id (uuid).
+create or replace function public.estado_pedido(p_id uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'codigo', p.codigo,
+    'estado', p.estado,
+    'tipo_entrega', p.tipo_entrega,
+    'motivo_rechazo', p.motivo_rechazo,
+    'actualizado_en', p.actualizado_en
+  )
+  from public.pedidos p
+  where p.id = p_id;
+$$;
+
+revoke all on function public.estado_pedido(uuid) from public;
+grant execute on function public.estado_pedido(uuid) to anon, authenticated;
+
+
 -- ---------------------------------------------------------------------
 -- 5. Seguridad por filas (RLS)
 -- ---------------------------------------------------------------------

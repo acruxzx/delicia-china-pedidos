@@ -2,7 +2,7 @@
 // Con Supabase configurado se usa la base de datos; si no, el "modo demo" con data/menu.json.
 
 import { CONFIG } from './config.js';
-import { agregarPedidoDemo, imagenLiviana, leerTiendaDemo } from './demo.js';
+import { agregarPedidoDemo, imagenLiviana, leerPedidosDemo, leerTiendaDemo } from './demo.js';
 
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.9/+esm';
 
@@ -91,7 +91,7 @@ async function menuLocal() {
 /* ---------- Pedido ---------- */
 
 // pedido = { nombre, telefono, tipoEntrega, direccion, notas, metodoPago, comprobante: { blob, ext, tipo }, lineas }
-// Devuelve { codigo, total, demo }
+// Devuelve { id, codigo, total, demo }
 export async function enviarPedido(pedido) {
   const items = pedido.lineas.map((l) => ({
     plato_id: l.plato.id,
@@ -129,7 +129,7 @@ export async function enviarPedido(pedido) {
       })),
       comprobante: await imagenLiviana(pedido.comprobante.blob),
     });
-    return { codigo: guardado.codigo, total, demo: true };
+    return { id: guardado.id, codigo: guardado.codigo, total, demo: true };
   }
 
   const sb = await obtenerSupabase();
@@ -158,5 +158,17 @@ export async function enviarPedido(pedido) {
     // Los mensajes de crear_pedido ya están escritos para el cliente.
     throw new Error(error.message || 'No se pudo enviar el pedido. Inténtalo de nuevo.');
   }
-  return { codigo: data.codigo, total: data.total, demo: false };
+  return { id: data.id, codigo: data.codigo, total: data.total, demo: false };
+}
+
+// Estado actual de un pedido del cliente: { estado, motivoRechazo } o null si no existe.
+export async function consultarEstado(id) {
+  if (!supabaseConfigurado()) {
+    const p = (leerPedidosDemo() ?? []).find((x) => x.id === id);
+    return p ? { estado: p.estado, motivoRechazo: p.motivoRechazo } : null;
+  }
+  const sb = await obtenerSupabase();
+  const { data, error } = await sb.rpc('estado_pedido', { p_id: id });
+  if (error) throw error;
+  return data ? { estado: data.estado, motivoRechazo: data.motivo_rechazo } : null;
 }

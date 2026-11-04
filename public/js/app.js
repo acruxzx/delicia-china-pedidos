@@ -92,6 +92,7 @@ function mostrarVista() {
     window.scrollTo(0, 0);
     $('#titulo-pedido').focus({ preventScroll: true });
   } else if (vista === 'listo') {
+    checkout.alMostrarListo();
     window.scrollTo(0, 0);
     $('#titulo-listo').focus({ preventScroll: true });
   } else if (anterior !== 'menu') {

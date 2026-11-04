@@ -64,7 +64,8 @@ delicia-china-pedidos/
 │   └── img/                  Logo, ícono y favicon
 ├── supabase/
 │   ├── 01-esquema.sql        Tablas, seguridad, función crear_pedido y bucket de comprobantes
-│   └── 02-datos-ejemplo.sql  Configuración y menú de ejemplo
+│   ├── 02-datos-ejemplo.sql  Configuración y menú de ejemplo
+│   └── 03-seguimiento.sql    Función estado_pedido (solo si el esquema se instaló antes de este cambio)
 ├── README.md
 └── CONTEXTO.md               Decisiones y avance del piloto
 ```
@@ -86,6 +87,7 @@ Al llenarlos, lee el menú y el estado de la tienda desde Supabase. Si Supabase 
 Reglas de seguridad:
 
 - El cliente **solo lee el menú** y **crea pedidos con la función `crear_pedido`**. No puede ver pedidos de otros.
+- El cliente consulta el estado de **su** pedido con la función `estado_pedido`, usando el id secreto (uuid) que recibió al crearlo.
 - `crear_pedido` calcula el total con los precios de la base de datos, así nadie cambia precios desde el navegador.
 - Los comprobantes van a un bucket privado: el cliente solo sube, el personal puede verlos.
 - El personal (usuario con sesión iniciada) ve y actualiza pedidos, menú y configuración.

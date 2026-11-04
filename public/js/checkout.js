@@ -1,10 +1,31 @@
 // Vista "Finalizar pedido": datos del cliente, entrega, pago y comprobante.
-// También pinta la vista "Pedido recibido".
+// También pinta la vista "Pedido recibido" y sigue el estado del pedido hasta que se entrega.
 
 import { NOMBRES_PAGO } from './config.js';
-import { enviarPedido } from './datos.js';
+import { consultarEstado, enviarPedido } from './datos.js';
 
 const CLAVE_CLIENTE = 'delicia-china:cliente';
+const CLAVE_SEGUIMIENTO = 'delicia-china:ultimo-pedido';
+const CADA_CUANTO = 20000; // ms entre consultas del estado
+const VIGENCIA = 24 * 3600 * 1000; // el seguimiento se olvida al día siguiente
+const ESTADOS_FINALES = ['entregado', 'rechazado'];
+
+const PASOS = {
+  pago_por_revisar: 0,
+  en_preparacion: 1,
+  en_camino: 2,
+  listo_para_recoger: 2,
+  entregado: 3,
+};
+
+const TEXTO_ESTADO = {
+  pago_por_revisar: 'Revisando tu pago',
+  en_preparacion: 'En preparación',
+  en_camino: 'En camino',
+  listo_para_recoger: 'Listo para recoger',
+  entregado: 'Entregado',
+  rechazado: 'Pago rechazado',
+};
 const MAX_LADO = 1600; // px del lado más largo del comprobante comprimido
 const MAX_BYTES = 5 * 1024 * 1024;
 const TIPOS_DIRECTOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -35,16 +56,22 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
     editar: $('#editar-carrito'),
     listo: $('#contenido-listo'),
     volverListo: $('#volver-desde-listo'),
+    seguimiento: $('#seguimiento'),
+    textoSeguimiento: $('#texto-seguimiento'),
+    ocultarSeguimiento: $('#ocultar-seguimiento'),
   };
 
   const metodos = (datos.tienda.datosPago ?? []).filter((d) => NOMBRES_PAGO[d.metodo]);
   let comprobante = null; // { blob, ext, tipo, url }
-  let ultimo = null; // pedido enviado
+  let ultimo = leerSeguimiento(); // último pedido enviado desde este navegador
   let enviando = false;
+  let temporizador = null;
 
   rellenarCliente();
   pintarMetodos();
   activarEventos();
+  pintarBanner();
+  seguirEstado();
 
   /* ---------- Pintar ---------- */
 
@@ -232,8 +259,23 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
 
     try {
       const resultado = await enviarPedido(pedido);
-      ultimo = { ...pedido, ...resultado };
+      ultimo = {
+        id: resultado.id,
+        codigo: resultado.codigo,
+        total: resultado.total,
+        demo: resultado.demo,
+        telefono: pedido.telefono,
+        tipoEntrega: pedido.tipoEntrega,
+        direccion: pedido.direccion,
+        metodoPago: pedido.metodoPago,
+        creadoEn: Date.now(),
+        estado: 'pago_por_revisar',
+        motivoRechazo: null,
+        oculto: false,
+      };
+      guardarSeguimiento();
       guardarCliente(pedido);
+      seguirEstado();
       pintarListo();
       carrito.vaciar();
       quitarComprobanteSilencioso();
@@ -260,30 +302,121 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
 
   function pintarListo() {
     const p = ultimo;
+    if (!p) return;
     const tel = `${p.telefono.slice(0, 3)} ${p.telefono.slice(3, 6)} ${p.telefono.slice(6)}`;
     const wa = (datos.tienda.whatsappTienda ?? '').replace(/\D/g, '');
     const waVisible = wa.length === 12 ? `+57 ${wa.slice(2, 5)} ${wa.slice(5, 8)} ${wa.slice(8)}` : wa;
+    const rechazado = p.estado === 'rechazado';
+    const paso = PASOS[p.estado] ?? 0;
+    const pasos = ['Revisando tu pago', 'En preparación', p.tipoEntrega === 'domicilio' ? 'En camino' : 'Listo para recoger', 'Entregado'];
+
+    const mensaje = {
+      pago_por_revisar: `Estamos revisando tu comprobante. Te confirmaremos por WhatsApp al <strong>${tel}</strong>.`,
+      en_preparacion: '¡Pago confirmado! Ya estamos preparando tu pedido.',
+      en_camino: `Tu pedido va en camino${p.direccion ? ` a ${escapar(p.direccion)}` : ''}.`,
+      listo_para_recoger: 'Tu pedido está listo. Puedes pasar a recogerlo al local.',
+      entregado: 'Pedido entregado. ¡Buen provecho!',
+      rechazado: `No pudimos confirmar tu pago${p.motivoRechazo ? `: ${escapar(p.motivoRechazo)}` : ''}. Escríbenos por WhatsApp y te ayudamos.`,
+    }[p.estado];
+
+    document.getElementById('titulo-listo').textContent = rechazado
+      ? 'Revisemos tu pago'
+      : p.estado === 'entregado'
+        ? '¡Pedido entregado!'
+        : '¡Pedido recibido!';
+
     f.listo.innerHTML = `
       ${p.demo ? '<p class="aviso-listo-demo">Modo demo: este pedido solo quedó guardado en este navegador. Ábrelo en el panel (/panel) para verlo llegar.</p>' : ''}
       <p class="codigo">Pedido <strong>#${p.codigo}</strong></p>
-      <ol class="pasos-estado" aria-label="Estado del pedido">
-        <li class="actual">Revisando tu pago</li>
-        <li>En preparación</li>
-        <li>${p.tipoEntrega === 'domicilio' ? 'En camino' : 'Listo para recoger'}</li>
-      </ol>
-      <p>Estamos revisando tu comprobante. Te confirmaremos por WhatsApp al <strong>${tel}</strong>.</p>
+      ${
+        rechazado
+          ? '<p class="estado-rechazado">Pago rechazado</p>'
+          : `<ol class="pasos-estado" aria-label="Estado del pedido">
+              ${pasos
+                .map((t, i) => `<li class="${i < paso ? 'hecho' : i === paso ? 'actual' : ''}"${i === paso ? ' aria-current="step"' : ''}>${t}</li>`)
+                .join('')}
+            </ol>`
+      }
+      <p class="mensaje-estado" aria-live="polite">${mensaje}</p>
+      ${ESTADOS_FINALES.includes(p.estado) ? '' : '<p class="nota">Esta página se actualiza sola.</p>'}
       <dl class="pago-filas">
         <div><dt>Total pagado</dt><dd>${pesos.format(p.total)}</dd></div>
         <div><dt>Entrega</dt><dd>${p.tipoEntrega === 'domicilio' ? escapar(`Domicilio · ${p.direccion}`) : 'Recoger en el local'}</dd></div>
         <div><dt>Pago</dt><dd>${NOMBRES_PAGO[p.metodoPago]}</dd></div>
       </dl>
-      ${p.tipoEntrega === 'domicilio' ? '<p class="nota">El costo del domicilio te lo confirmamos por WhatsApp.</p>' : ''}
+      ${p.tipoEntrega === 'domicilio' && !rechazado ? '<p class="nota">El costo del domicilio te lo confirmamos por WhatsApp.</p>' : ''}
       ${
         wa
           ? `<p class="nota">¿Dudas? Escríbenos al WhatsApp <span class="seleccionable">${waVisible}</span>
              · <a href="https://wa.me/${wa}?text=${encodeURIComponent(`Hola, tengo una pregunta sobre mi pedido #${p.codigo}`)}" target="_blank" rel="noopener">abrir WhatsApp</a></p>`
           : ''
       }`;
+  }
+
+  /* ---------- Seguimiento del estado ---------- */
+
+  function activo() {
+    return ultimo && !ESTADOS_FINALES.includes(ultimo.estado);
+  }
+
+  async function actualizarEstado() {
+    if (!ultimo?.id) return;
+    try {
+      const r = await consultarEstado(ultimo.id);
+      if (!r) return;
+      if (r.estado !== ultimo.estado || r.motivoRechazo !== ultimo.motivoRechazo) {
+        const antes = ultimo.estado;
+        ultimo = { ...ultimo, estado: r.estado, motivoRechazo: r.motivoRechazo, oculto: false };
+        guardarSeguimiento();
+        pintarListo();
+        pintarBanner();
+        if (antes !== r.estado && document.body.dataset.vista !== 'listo') {
+          avisar(`Tu pedido #${ultimo.codigo}: ${TEXTO_ESTADO[r.estado].toLowerCase()}`);
+        }
+      }
+    } catch (error) {
+      console.warn('No se pudo consultar el estado del pedido.', error);
+    }
+    if (!activo()) detenerSeguimiento();
+  }
+
+  function seguirEstado() {
+    detenerSeguimiento();
+    if (!activo()) return;
+    temporizador = setInterval(() => {
+      if (document.visibilityState === 'visible') actualizarEstado();
+    }, CADA_CUANTO);
+  }
+
+  function detenerSeguimiento() {
+    clearInterval(temporizador);
+    temporizador = null;
+  }
+
+  function pintarBanner() {
+    const mostrar = ultimo && !ultimo.oculto && ultimo.estado !== 'entregado';
+    f.seguimiento.hidden = !mostrar;
+    if (!mostrar) return;
+    f.textoSeguimiento.textContent = `Tu pedido #${ultimo.codigo}: ${TEXTO_ESTADO[ultimo.estado] ?? ''}`;
+    f.seguimiento.dataset.estado = ultimo.estado;
+  }
+
+  function leerSeguimiento() {
+    try {
+      const p = JSON.parse(localStorage.getItem(CLAVE_SEGUIMIENTO) ?? 'null');
+      if (!p?.id || Date.now() - p.creadoEn > VIGENCIA) return null;
+      return p;
+    } catch {
+      return null;
+    }
+  }
+
+  function guardarSeguimiento() {
+    try {
+      localStorage.setItem(CLAVE_SEGUIMIENTO, JSON.stringify(ultimo));
+    } catch {
+      /* sin almacenamiento: el seguimiento dura mientras la página esté abierta */
+    }
   }
 
   /* ---------- Datos del cliente recordados ---------- */
@@ -366,11 +499,26 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
       document.querySelector('#barra-carrito')?.click();
     });
     f.volverListo.addEventListener('click', irAlMenu);
+    f.ocultarSeguimiento.addEventListener('click', () => {
+      if (!ultimo) return;
+      ultimo.oculto = true;
+      guardarSeguimiento();
+      pintarBanner();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && activo()) actualizarEstado();
+    });
   }
 
   return {
     pintar,
     hayConfirmacion: () => ultimo !== null,
+    // Al abrir la vista "Pedido recibido": pintar y consultar de inmediato.
+    alMostrarListo() {
+      pintarListo();
+      actualizarEstado();
+      seguirEstado();
+    },
   };
 }
 
