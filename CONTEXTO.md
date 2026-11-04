@@ -1,7 +1,7 @@
 # Piloto: app de pedidos para Delicia China (restaurante de comida china)
 
 Fecha del documento: 4 de noviembre de 2026
-Estado: semana 1 terminada (menú, búsqueda, carrito y base de datos)
+Estado: semana 2 en la rama desarrollo (pedido completo en modo demo); falta conectar Supabase
 
 ## 1. Contexto
 
@@ -125,4 +125,15 @@ Propuesta de avance por semanas (a ajustar):
 - Esquema de Supabase probado en PostgreSQL: tablas, seguridad por filas, función `crear_pedido` que calcula el total en el servidor, bucket privado de comprobantes y tiempo real para el panel.
 - Vista previa publicada como artifact para revisarla desde el celular.
 
-**Siguiente: semana 2** — opciones y notas por plato, formulario de entrega, instrucciones de pago, subida del comprobante y creación del proyecto en Supabase.
+**Publicación (4 de noviembre de 2026)**
+- Código en GitHub: `acruxzx/delicia-china-pedidos`, ramas `main` (estable) y `desarrollo` (avances).
+- Publicado en Cloudflare (Worker con archivos estáticos): https://delicia-china-pedidos.juanfelipeladino8.workers.dev/ — se actualiza solo con cada cambio en `main`.
+
+**Semana 2 (en `desarrollo`)**
+- Opciones y nota por plato en el carrito.
+- Vista Finalizar pedido: nombre, celular, domicilio o recoger, dirección, indicaciones, medio de pago con datos para copiar, subida del comprobante comprimido.
+- Pantalla Pedido recibido con número de pedido y pasos del estado.
+- Envío real a Supabase ya programado (Storage + función `crear_pedido`); se activa al llenar `js/config.js`.
+- Pendiente: crear el proyecto de Supabase y probar un pedido real de punta a punta.
+
+**Siguiente: semana 3** — panel para tablet.

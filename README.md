@@ -5,12 +5,14 @@ el cliente pide desde el celular, sube el comprobante de pago y el local lo apru
 
 > **Platos y precios de ejemplo.** El menú de `data/menu.json` es genérico. Se reemplaza por el real si el dueño acepta.
 
-## Estado: semana 1 lista
+## Estado: semana 2 en la rama `desarrollo`
 
 - Menú por categorías (65 platos de ejemplo en 13 categorías) con barra de categorías que sigue el desplazamiento.
 - Búsqueda que ignora tildes y mayúsculas ("wantan" encuentra "Wantán").
 - Botón **Agregar** que se convierte en contador, y carrito que se conserva si se recarga la página.
-- Resumen del pedido con subtotal. El botón **Continuar** todavía no lleva a ninguna parte (semana 2).
+- Resumen del pedido con subtotal.
+- **Semana 2:** opciones y nota por plato (aplican a todas las unidades de ese plato), vista **Finalizar pedido** con datos del cliente, domicilio o recoger, medio de pago con número para copiar, subida del pantallazo del comprobante (se reduce a un JPG liviano) y pantalla **Pedido recibido**. La web recuerda nombre, celular y dirección del cliente para la próxima vez.
+- En modo demo el pedido no se guarda en ningún lado; la pantalla final lo dice.
 - Estado de la tienda: "Recibiendo pedidos" o "Cerrado por ahora" (si está cerrado, no se puede agregar).
 - Base de datos diseñada y probada para Supabase (`supabase/`).
 
@@ -37,8 +39,9 @@ delicia-china/
 ├── js/
 │   ├── config.js         Nombre, datos de Supabase y valores del modo demo
 │   ├── datos.js          Lee el menú: de Supabase si está configurado, si no de data/menu.json
-│   ├── carrito.js        Carrito guardado en el navegador
-│   └── app.js            Pinta el menú, búsqueda, categorías y carrito
+│   ├── carrito.js        Carrito guardado en el navegador (cantidad, opciones y nota por plato)
+│   ├── checkout.js       Finalizar pedido: datos, entrega, pago, comprobante y confirmación
+│   └── app.js            Menú, búsqueda, categorías, carrito y cambio de vistas (#pedido, #listo)
 ├── data/menu.json        Menú genérico de ejemplo
 ├── img/                  Logo, ícono y favicon recortados del logo original
 └── supabase/
@@ -71,6 +74,12 @@ Estados del pedido: `pago_por_revisar` → `en_preparacion` → `en_camino` o `l
 
 ## Próximos pasos
 
-- **Semana 2:** notas y opciones por plato, formulario de entrega (domicilio o recoger), instrucciones de pago, subida del comprobante, crear el proyecto gratuito en Supabase.
+- **Pendiente de la semana 2:** crear el proyecto gratuito en Supabase, ejecutar los dos scripts SQL y poner la URL y la clave pública en `js/config.js`.
 - **Semana 3:** panel para tablet: lista de pedidos en tiempo real con alerta sonora, ver comprobante, aprobar o rechazar, botón de WhatsApp, abrir y cerrar pedidos.
 - **Semana 4:** pruebas en celular y tablet, publicación en hosting gratuito y guion para presentarle el piloto al dueño.
+
+## Ramas y publicación
+
+- `main`: versión estable, publicada en Cloudflare (enlace principal).
+- `desarrollo`: avances de cada semana. Cuando se aprueban, se pasan a `main`.
+- `.assetsignore` evita que README, CONTEXTO y los scripts SQL se publiquen en la web.

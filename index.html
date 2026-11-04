@@ -15,7 +15,7 @@
     />
     <link rel="stylesheet" href="css/estilos.css" />
   </head>
-  <body>
+  <body data-vista="menu">
     <header class="cabecera">
       <div class="envoltura cabecera-interior">
         <img class="logo" src="img/logo.png" alt="Delicia China Restaurante" width="385" height="300" />
@@ -33,7 +33,7 @@
       <span class="envoltura">En este momento no estamos recibiendo pedidos. Puedes ver el menú y volver más tarde.</span>
     </p>
 
-    <div class="barra-pegajosa">
+    <div class="barra-pegajosa solo-menu">
       <div class="envoltura">
         <div class="buscador">
           <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
@@ -48,23 +48,128 @@
       <nav id="categorias" class="categorias" aria-label="Categorías del menú"></nav>
     </div>
 
-    <main class="envoltura">
-      <div id="menu" class="menu" aria-live="off">
-        <p class="cargando">Cargando el menú…</p>
+    <main>
+      <div class="envoltura solo-menu">
+        <div id="menu" class="menu" aria-live="off">
+          <p class="cargando">Cargando el menú…</p>
+        </div>
+        <div id="sin-resultados" class="sin-resultados" hidden>
+          <p id="texto-sin-resultados"></p>
+          <p>Prueba con otra palabra, por ejemplo “pollo” o “chop suey”.</p>
+        </div>
       </div>
-      <div id="sin-resultados" class="sin-resultados" hidden>
-        <p id="texto-sin-resultados"></p>
-        <p>Prueba con otra palabra, por ejemplo “pollo” o “chop suey”.</p>
-      </div>
+
+      <section id="vista-pedido" class="vista envoltura" aria-labelledby="titulo-pedido">
+        <button type="button" id="volver-menu" class="volver">← Volver al menú</button>
+        <h1 id="titulo-pedido" class="titulo-vista" tabindex="-1">Finalizar pedido</h1>
+
+        <form id="form-pedido" class="form-pedido" novalidate>
+          <section class="bloque bloque-resumen" aria-labelledby="t-resumen">
+            <div class="bloque-cabecera">
+              <h2 id="t-resumen">Tu pedido</h2>
+              <button type="button" id="editar-carrito" class="enlace">Editar</button>
+            </div>
+            <ul id="resumen-pedido" class="resumen"></ul>
+            <div class="fila-total">
+              <span>Total a pagar</span>
+              <strong id="total-pedido">$ 0</strong>
+            </div>
+          </section>
+
+          <section class="bloque" aria-labelledby="t-datos">
+            <h2 id="t-datos"><span class="paso">1</span>Tus datos</h2>
+            <div class="campo" data-campo="nombre">
+              <label for="f-nombre">Nombre</label>
+              <input id="f-nombre" name="nombre" type="text" autocomplete="name" maxlength="80" aria-describedby="err-nombre" />
+              <p id="err-nombre" class="error-campo" hidden></p>
+            </div>
+            <div class="campo" data-campo="telefono">
+              <label for="f-telefono">Celular con WhatsApp</label>
+              <input id="f-telefono" name="telefono" type="tel" inputmode="numeric" autocomplete="tel-national"
+                placeholder="300 123 4567" maxlength="16" aria-describedby="ayuda-telefono err-telefono" />
+              <p id="ayuda-telefono" class="ayuda">Aquí te confirmamos el pedido.</p>
+              <p id="err-telefono" class="error-campo" hidden></p>
+            </div>
+          </section>
+
+          <section class="bloque" aria-labelledby="t-entrega">
+            <h2 id="t-entrega"><span class="paso">2</span>Entrega</h2>
+            <fieldset class="opciones-entrega">
+              <legend class="solo-lector">Tipo de entrega</legend>
+              <label class="opcion-entrega" for="e-domicilio">
+                <input type="radio" id="e-domicilio" name="entrega" value="domicilio" checked />
+                <span><strong>Domicilio</strong><small>Te lo llevamos</small></span>
+              </label>
+              <label class="opcion-entrega" for="e-recoger">
+                <input type="radio" id="e-recoger" name="entrega" value="recoger" />
+                <span><strong>Recoger</strong><small>Pasas por el local</small></span>
+              </label>
+            </fieldset>
+            <div class="campo" data-campo="direccion" id="campo-direccion">
+              <label for="f-direccion">Dirección y barrio</label>
+              <input id="f-direccion" name="direccion" type="text" autocomplete="street-address" maxlength="160"
+                placeholder="Calle 5 # 3-20, barrio San Rafael" aria-describedby="err-direccion" />
+              <p id="err-direccion" class="error-campo" hidden></p>
+            </div>
+            <p id="nota-domicilio-pedido" class="nota">El costo del domicilio no está incluido; te lo confirmamos por WhatsApp.</p>
+            <div class="campo">
+              <label for="f-notas">Indicaciones <small>(opcional)</small></label>
+              <textarea id="f-notas" name="notas" rows="2" maxlength="500"
+                placeholder="Ej.: apartamento 302, timbre dañado"></textarea>
+            </div>
+          </section>
+
+          <section class="bloque" aria-labelledby="t-pago">
+            <h2 id="t-pago"><span class="paso">3</span>Pago</h2>
+            <div class="campo" data-campo="metodo">
+              <fieldset>
+                <legend class="solo-lector">Medio de pago</legend>
+                <div id="metodos-pago" class="metodos-pago"></div>
+              </fieldset>
+              <p id="err-metodo" class="error-campo" hidden></p>
+            </div>
+            <div id="datos-pago" class="datos-pago" aria-live="polite"></div>
+          </section>
+
+          <section class="bloque" aria-labelledby="t-comprobante">
+            <h2 id="t-comprobante"><span class="paso">4</span>Comprobante de pago</h2>
+            <div class="campo" data-campo="comprobante">
+              <label id="zona-comprobante" class="zona-archivo" for="f-comprobante">
+                <input id="f-comprobante" type="file" accept="image/*" aria-describedby="err-comprobante" />
+                <strong>Subir pantallazo</strong>
+                <small>Toma una captura de la transferencia y elígela aquí</small>
+              </label>
+              <div id="vista-comprobante" class="vista-comprobante" hidden>
+                <img id="imagen-comprobante" alt="Comprobante elegido" />
+                <div>
+                  <p id="nombre-comprobante" class="ayuda"></p>
+                  <button type="button" id="quitar-comprobante" class="enlace">Cambiar imagen</button>
+                </div>
+              </div>
+              <p id="err-comprobante" class="error-campo" hidden></p>
+            </div>
+          </section>
+
+          <div id="error-envio" class="error-envio" role="alert" hidden></div>
+          <button type="submit" id="enviar" class="boton-principal boton-enviar">Enviar pedido</button>
+          <p class="nota centrada">Revisamos tu comprobante y te confirmamos por WhatsApp antes de preparar el pedido.</p>
+        </form>
+      </section>
+
+      <section id="vista-listo" class="vista envoltura" aria-labelledby="titulo-listo">
+        <h1 id="titulo-listo" class="titulo-vista" tabindex="-1">¡Pedido recibido!</h1>
+        <div id="contenido-listo" class="contenido-listo"></div>
+        <button type="button" id="volver-desde-listo" class="boton-secundario">Volver al menú</button>
+      </section>
     </main>
 
-    <footer class="pie envoltura">
+    <footer class="pie envoltura solo-menu">
       <img src="img/icono.png" alt="" width="56" height="56" />
       <p>Delicia China · Piedecuesta, Santander</p>
       <p>Pago por Nequi, Daviplata o transferencia. El costo del domicilio se confirma por WhatsApp.</p>
     </footer>
 
-    <button id="barra-carrito" type="button" class="barra-carrito" hidden>
+    <button id="barra-carrito" type="button" class="barra-carrito solo-menu" hidden>
       <span class="barra-interior">
         <span class="barra-texto">
           <strong>Ver pedido</strong>
