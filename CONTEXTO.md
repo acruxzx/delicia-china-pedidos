@@ -1,7 +1,7 @@
 # Piloto: app de pedidos para Delicia China (restaurante de comida china)
 
 Fecha del documento: 4 de noviembre de 2026
-Estado: semanas 1 a 3 construidas en modo demo (menú, pedido y panel); falta conectar Supabase
+Estado: piloto completo con Supabase; geolocalización fase 1 lista
 
 ## 1. Contexto
 
@@ -148,4 +148,18 @@ Propuesta de avance por semanas (a ajustar):
 - Modo demo: la web y el panel comparten los pedidos en el mismo navegador; el panel trae tres pedidos de ejemplo y un botón "Simular pedido". Contraseña libre.
 - Con Supabase: ingreso con usuario del personal, pedidos en tiempo real y comprobantes con enlace firmado de una hora.
 
-**Siguiente: semana 4** — conectar Supabase, pruebas reales celular → tablet y guion de presentación al dueño.
+**Semana 4 (Supabase y mejoras)**
+- Supabase conectado (proyecto `oycremitolvivjyoltfn`, clave publishable en config.js). Probado celular → tablet.
+- Seguimiento del pedido en la página del cliente (función `estado_pedido`, 03-seguimiento.sql).
+- Buscador de pedidos en el panel.
+- Desde el 4 de noviembre todo se sube directo a `main`.
+
+**Facturación: Alegra**
+- El restaurante factura electrónicamente con Alegra (uso interno de los trabajadores). La app debe presentarse como complemento, no como otro software a pagar.
+- Alegra tiene API (correo + token, 150 consultas/min, sin ambiente de pruebas, requiere plan con integraciones). Integración posible a futuro: leer menú y precios, crear facturas al aprobar pedidos. No incluida en el piloto.
+
+**Geolocalización (6 de noviembre de 2026)**
+- Fase 1 hecha: ubicación opcional del cliente (GPS o tocando el mapa, pin movible), guardada con el pedido y borrada a los 7 días (04-ubicacion.sql). Panel con mapa, distancia y botones de ruta (Google Maps, Waze).
+- Local: Cra. 15, Piedecuesta (6.99184, -73.04639). Repartidores propios (cantidad por confirmar).
+- Fase 2 pendiente: panel de repartidores (/repartidor) con pedidos asignados.
+- Fase 3 pendiente: seguimiento en vivo del repartidor (limitado: el navegador solo envía la ubicación con la página abierta).

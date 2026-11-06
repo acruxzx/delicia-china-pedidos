@@ -5,13 +5,15 @@ el cliente pide desde el celular, sube el comprobante de pago y el local lo apru
 
 > **Platos y precios de ejemplo.** El menú de `data/menu.json` es genérico. Se reemplaza por el real si el dueño acepta.
 
-## Estado: semana 3 (panel del restaurante)
+## Estado: piloto completo con Supabase
 
 - Menú por categorías (65 platos de ejemplo en 13 categorías) con barra de categorías que sigue el desplazamiento.
 - Búsqueda que ignora tildes y mayúsculas ("wantan" encuentra "Wantán").
 - Botón **Agregar** que se convierte en contador, y carrito que se conserva si se recarga la página.
 - Resumen del pedido con subtotal.
 - **Semana 2:** opciones y nota por plato (aplican a todas las unidades de ese plato), vista **Finalizar pedido** con datos del cliente, domicilio o recoger, medio de pago con número para copiar, subida del pantallazo del comprobante (se reduce a un JPG liviano) y pantalla **Pedido recibido**. La web recuerda nombre, celular y dirección del cliente para la próxima vez.
+- **Ubicación del domicilio (opcional):** botón **Usar mi ubicación actual** en el formulario. Muestra un mapa con un pin que el cliente puede mover; si no da permiso, puede marcar el lugar tocando el mapa. La dirección escrita sigue siendo obligatoria. La ubicación se borra sola a los 7 días.
+- **Seguimiento del pedido:** la página "Pedido recibido" consulta el estado cada 20 segundos y avanza sola (revisando pago → en preparación → en camino o listo → entregado, o rechazado con el motivo). Si el cliente vuelve al menú, ve un aviso con el estado de su pedido durante 24 horas.
 - **Semana 3: panel del restaurante en `/panel`**, pensado para tablet horizontal (también funciona en celular):
   - Lista de pedidos en tres pestañas: **Por revisar**, **En curso** y **Finalizados**. Los que nadie ha abierto se marcan como **Nuevo**.
   - **Alerta sonora** al llegar un pedido, que se repite cada 30 segundos mientras haya pedidos nuevos sin abrir. Se activa con el primer toque en la pantalla.
@@ -19,13 +21,13 @@ el cliente pide desde el celular, sube el comprobante de pago y el local lo apru
   - **Aprobar** o **rechazar con motivo**, y luego **En camino** o **Listo para recoger**, y **Entregado**.
   - **Mensaje de WhatsApp** listo para cada estado, editable, con campo opcional para el costo del domicilio. El botón abre el chat con el cliente; el empleado solo pulsa enviar.
   - Interruptor para **abrir o cerrar la recepción** de pedidos.
+  - **Buscador** por número de pedido, nombre o celular.
+  - **Ubicación de entrega:** mapa con el local y el cliente, distancia en línea recta y botones **Ruta en Google Maps** y **Ruta en Waze**. Si el cliente no compartió ubicación, botón para buscar la dirección en Google Maps.
   - La pantalla se mantiene encendida mientras el panel está abierto (si el navegador lo permite).
 
 ### Modo demo
 
 Sin Supabase, la web y el panel guardan los datos en el navegador. Para probar el ciclo completo, abre el menú y `/panel` **en el mismo navegador** (por ejemplo, dos pestañas): los pedidos que hagas en el menú llegan al panel. En el panel se entra con cualquier contraseña, empieza con tres pedidos de **ejemplo** y tiene un botón **Simular pedido** para mostrar la alerta. Entre dispositivos distintos (celular → tablet) solo funciona con Supabase.
-- Estado de la tienda: "Recibiendo pedidos" o "Cerrado por ahora" (si está cerrado, no se puede agregar).
-- Base de datos diseñada y probada para Supabase (`supabase/`).
 
 ## Cómo verlo en tu computador
 
@@ -57,6 +59,8 @@ delicia-china-pedidos/
 │   │   ├── checkout.js       Finalizar pedido: datos, entrega, pago, comprobante y confirmación
 │   │   ├── app.js            Menú, búsqueda, categorías, carrito y vistas (#pedido, #listo)
 │   │   ├── demo.js           Almacén del modo demo, compartido por la web y el panel
+│   │   ├── mapa.js           Mapas (Leaflet + OpenStreetMap, cargados solo al usarlos), distancias y rutas
+│   │   ├── ubicacion-cliente.js  Botón "Usar mi ubicación" y pin en el formulario
 │   │   ├── panel-datos.js    Datos del panel: sesión, pedidos, estados, comprobantes, tienda
 │   │   └── panel.js          Pantalla del panel
 │   ├── panel/index.html      Panel del restaurante (/panel)
@@ -65,7 +69,8 @@ delicia-china-pedidos/
 ├── supabase/
 │   ├── 01-esquema.sql        Tablas, seguridad, función crear_pedido y bucket de comprobantes
 │   ├── 02-datos-ejemplo.sql  Configuración y menú de ejemplo
-│   └── 03-seguimiento.sql    Función estado_pedido (solo si el esquema se instaló antes de este cambio)
+│   ├── 03-seguimiento.sql    Función estado_pedido (solo si el esquema se instaló antes de ese cambio)
+│   └── 04-ubicacion.sql      Ubicación del domicilio (solo si el esquema se instaló antes de ese cambio)
 ├── README.md
 └── CONTEXTO.md               Decisiones y avance del piloto
 ```
@@ -104,3 +109,9 @@ Estados del pedido: `pago_por_revisar` → `en_preparacion` → `en_camino` o `l
 - `main`: versión estable, publicada en Cloudflare (enlace principal).
 - `desarrollo`: avances de cada semana. Cuando se aprueban, se pasan a `main`.
 - Cloudflare publica solo la carpeta `public/` (ver `wrangler.jsonc`); README, CONTEXTO y los scripts SQL no quedan en la web.
+
+## Mapas
+
+- Se usa Leaflet con los mapas públicos de OpenStreetMap: gratis y suficiente para el piloto, pero sin garantía de disponibilidad. Si el volumen crece, cambiar el proveedor en `public/js/mapa.js` (una línea).
+- La ubicación del local está en `public/js/config.js` (`ubicacionLocal`).
+- Privacidad: la ubicación es opcional, se pide con un texto claro de para qué se usa y la base de datos la borra a los 7 días.
