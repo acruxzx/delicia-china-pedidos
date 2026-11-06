@@ -4,8 +4,14 @@
 import { NOMBRES_PAGO } from './config.js';
 import { cargarLeaflet, crearMapa, distanciaKm, enlaceBusqueda, enlacesRuta, icono, LOCAL, textoDistancia } from './mapa.js';
 import {
+  asignarRepartidor,
   cambiarEstado,
   cambiarRecepcion,
+  guardarCostoDomicilio,
+  guardarPerfil,
+  listarEquipo,
+  listarRepartidores,
+  miRol,
   cerrarSesion,
   escucharCambios,
   iniciarSesion,
@@ -25,6 +31,7 @@ const $ = (s) => document.querySelector(s);
 const ESTADOS = {
   pago_por_revisar: { texto: 'Por revisar', clase: 'revisar' },
   en_preparacion: { texto: 'En preparación', clase: 'preparacion' },
+  esperando_repartidor: { texto: 'Esperando repartidor', clase: 'preparacion' },
   en_camino: { texto: 'En camino', clase: 'camino' },
   listo_para_recoger: { texto: 'Listo para recoger', clase: 'camino' },
   entregado: { texto: 'Entregado', clase: 'final' },
@@ -33,7 +40,7 @@ const ESTADOS = {
 
 const FILTROS = {
   revisar: ['pago_por_revisar'],
-  curso: ['en_preparacion', 'en_camino', 'listo_para_recoger'],
+  curso: ['en_preparacion', 'esperando_repartidor', 'en_camino', 'listo_para_recoger'],
   finalizados: ['entregado', 'rechazado'],
 };
 
@@ -55,8 +62,8 @@ const estado = {
   tienda: { recibiendoPedidos: true },
   rechazando: false,
   mensajeEditado: false,
-  costoDomicilio: '',
   busqueda: '',
+  repartidores: [], // [{ id, nombre, activo }]
 };
 
 /* ---------- Arranque ---------- */
@@ -114,9 +121,23 @@ let dejarDeEscuchar = null;
 let intervalos = [];
 
 async function abrirTrabajo() {
+  const rol = await miRol();
+  if (rol !== 'personal') {
+    await cerrarSesion();
+    mostrarPantalla('ingreso');
+    const error = $('#error-ingreso');
+    error.innerHTML =
+      rol === 'repartidor'
+        ? 'Esta cuenta es de repartidor. Entra desde la <a href="/repartidor/">app del repartidor</a>.'
+        : 'Tu usuario todavía no tiene acceso al panel. Pide a alguien del personal que te asigne un rol en «Equipo».';
+    error.hidden = false;
+    return;
+  }
   mostrarPantalla('trabajo');
-  await Promise.all([recargarPedidos(), recargarTienda()]);
-  dejarDeEscuchar = await escucharCambios((tipo) => (tipo === 'tienda' ? recargarTienda() : recargarPedidos()));
+  await Promise.all([recargarPedidos(), recargarTienda(), recargarRepartidores()]);
+  dejarDeEscuchar = await escucharCambios((tipo) =>
+    tipo === 'tienda' ? recargarTienda() : tipo === 'equipo' ? recargarRepartidores() : recargarPedidos(),
+  );
   intervalos = [
     setInterval(recargarPedidos, 60000), // respaldo si se pierde la conexión en tiempo real
     setInterval(() => pintarLista(), 30000), // "hace X min"
@@ -160,6 +181,24 @@ async function recargarPedidos() {
   }
   pintarLista();
   pintarDetalle({ conservarFormulario: true });
+}
+
+async function recargarRepartidores() {
+  try {
+    estado.repartidores = await listarRepartidores();
+  } catch (err) {
+    console.error(err);
+  }
+  pintarLista();
+  pintarDetalle({ conservarFormulario: true });
+}
+
+function nombreRepartidor(id) {
+  return estado.repartidores.find((r) => r.id === id)?.nombre ?? 'Repartidor';
+}
+
+function hayRepartidores() {
+  return estado.repartidores.some((r) => r.activo !== false);
 }
 
 async function recargarTienda() {
@@ -232,7 +271,15 @@ function pintarLista() {
               } · ${unidades} ${unidades === 1 ? 'producto' : 'productos'}</span>
               <strong class="tp-total">${pesos.format(p.total)}</strong>
             </span>
-            ${estado.filtro === 'revisar' && !buscando ? '' : `<span class="pastilla-estado ${e.clase}">${e.texto}</span>`}
+            ${
+              estado.filtro === 'revisar' && !buscando
+                ? ''
+                : `<span class="pastilla-estado ${e.clase}">${e.texto}${
+                    p.repartidorId && ['esperando_repartidor', 'en_camino', 'entregado'].includes(p.estado)
+                      ? ` · ${escapar(nombreRepartidor(p.repartidorId))}`
+                      : ''
+                  }</span>`
+            }
           </button>
         </li>`;
     })
@@ -291,7 +338,6 @@ function seleccionar(id) {
   if (estado.seleccionado !== id) {
     estado.rechazando = false;
     estado.mensajeEditado = false;
-    estado.costoDomicilio = '';
   }
   estado.seleccionado = id;
   marcarVisto(id);
@@ -367,7 +413,15 @@ async function pintarDetalle({ conservarFormulario = false } = {}) {
               .join('')}
           </ul>
           <div class="fila-total"><span>Total pagado</span><strong>${pesos.format(p.total)}</strong></div>
-          ${p.tipoEntrega === 'domicilio' ? '<p class="nota">Sin domicilio. El costo se acuerda por WhatsApp.</p>' : ''}
+          ${
+            p.tipoEntrega === 'domicilio'
+              ? `<p class="nota">${
+                  p.costoDomicilio > 0
+                    ? `Domicilio aparte: ${pesos.format(p.costoDomicilio)}, lo cobra el repartidor.`
+                    : 'Sin domicilio. El costo se acuerda por WhatsApp.'
+                }</p>`
+              : ''
+          }
         </section>
       </div>
 
@@ -490,14 +544,59 @@ function htmlAcciones(p) {
       </section>`;
   }
 
+  const boton = (estadoNuevo, texto, clase = 'boton-principal boton-grande') =>
+    `<button type="button" class="${clase}" data-accion="estado" data-estado="${estadoNuevo}">${texto}</button>`;
+
+  let extra = '';
+  if (p.tipoEntrega === 'domicilio' && ['en_preparacion', 'esperando_repartidor'].includes(p.estado)) {
+    extra += `
+      <div class="campo campo-costo">
+        <label for="costo-domicilio">Costo del domicilio <small>(lo cobra el repartidor al entregar)</small></label>
+        <input id="costo-domicilio" type="number" inputmode="numeric" min="0" step="500" placeholder="Ej.: 4000" value="${p.costoDomicilio ?? ''}" />
+      </div>`;
+  }
+  if (p.estado === 'esperando_repartidor') {
+    extra += `
+      <div class="campo">
+        <label for="asignar-repartidor">Quién lo lleva</label>
+        <select id="asignar-repartidor">
+          <option value="">El primero que lo tome</option>
+          ${estado.repartidores
+            .filter((r) => r.activo !== false || r.id === p.repartidorId)
+            .map((r) => `<option value="${r.id}"${r.id === p.repartidorId ? ' selected' : ''}>${escapar(r.nombre)}</option>`)
+            .join('')}
+        </select>
+        <p class="nota">${
+          p.repartidorId
+            ? `Le aparece a ${escapar(nombreRepartidor(p.repartidorId))} en su celular. Pasa a «En camino» cuando pulse «Salir con el pedido».`
+            : 'Les aparece a todos los repartidores. Pasa a «En camino» cuando uno pulse «Salir con el pedido».'
+        }</p>
+      </div>`;
+  }
+  if (p.estado === 'en_camino' && p.repartidorId) {
+    extra += `<p class="info-reparto">Lo lleva <strong>${escapar(nombreRepartidor(p.repartidorId))}</strong>${
+      p.salioEn ? ` · salió a las ${hora.format(new Date(p.salioEn))}` : ''
+    }${p.costoDomicilio ? ` · cobra domicilio ${pesos.format(p.costoDomicilio)}` : ''}</p>`;
+  }
+  if (p.estado === 'entregado' && p.entregadoEn) {
+    extra += `<p class="info-reparto">Entregado a las ${hora.format(new Date(p.entregadoEn))}${
+      p.repartidorId ? ` por ${escapar(nombreRepartidor(p.repartidorId))}` : ''
+    }</p>`;
+  }
+
   const botones = {
     pago_por_revisar: `
       <button type="button" class="boton-principal boton-grande" data-accion="estado" data-estado="en_preparacion">Aprobar pago</button>
       <button type="button" class="boton-secundario" data-accion="rechazar">Rechazar</button>`,
     en_preparacion:
       p.tipoEntrega === 'domicilio'
-        ? `<button type="button" class="boton-principal boton-grande" data-accion="estado" data-estado="en_camino">Marcar en camino</button>`
-        : `<button type="button" class="boton-principal boton-grande" data-accion="estado" data-estado="listo_para_recoger">Marcar listo para recoger</button>`,
+        ? hayRepartidores()
+          ? boton('esperando_repartidor', 'Listo para despachar') + boton('en_camino', 'Marcar en camino', 'boton-secundario')
+          : boton('en_camino', 'Marcar en camino')
+        : boton('listo_para_recoger', 'Marcar listo para recoger'),
+    esperando_repartidor:
+      boton('en_camino', 'Marcar en camino sin la app', 'boton-secundario') +
+      boton('en_preparacion', 'Volver a preparación', 'boton-secundario'),
     en_camino: `<button type="button" class="boton-principal boton-grande" data-accion="estado" data-estado="entregado">Marcar entregado</button>`,
     listo_para_recoger: `<button type="button" class="boton-principal boton-grande" data-accion="estado" data-estado="entregado">Marcar entregado</button>`,
     entregado: '',
@@ -505,8 +604,8 @@ function htmlAcciones(p) {
       <button type="button" class="boton-secundario" data-accion="estado" data-estado="pago_por_revisar">Volver a revisar</button>`,
   }[p.estado];
 
-  if (!botones) return '';
-  return `<section class="tarjeta tarjeta-acciones"><div class="fila-botones">${botones}</div></section>`;
+  if (!botones && !extra) return '';
+  return `<section class="tarjeta tarjeta-acciones">${extra}${botones ? `<div class="fila-botones">${botones}</div>` : ''}</section>`;
 }
 
 function textoMensaje(p) {
@@ -518,7 +617,7 @@ function textoMensaje(p) {
     case 'en_preparacion': {
       const total = pesos.format(p.total);
       if (p.tipoEntrega === 'domicilio') {
-        const costo = Number(estado.costoDomicilio) > 0 ? pesos.format(Number(estado.costoDomicilio)) : null;
+        const costo = p.costoDomicilio > 0 ? pesos.format(p.costoDomicilio) : null;
         return `${saludo} Confirmamos tu pago de ${total}. Tu pedido #${p.codigo} ya está en preparación.${
           costo ? ` El domicilio a ${p.direccion} tiene un costo de ${costo}, que pagas al recibir.` : ''
         } Te avisamos cuando salga. ¡Gracias por tu compra!`;
@@ -526,7 +625,9 @@ function textoMensaje(p) {
       return `${saludo} Confirmamos tu pago de ${total}. Tu pedido #${p.codigo} ya está en preparación. Te avisamos cuando esté listo para recoger. ¡Gracias por tu compra!`;
     }
     case 'en_camino':
-      return `${saludo} Tu pedido #${p.codigo} ya va en camino a ${p.direccion}.`;
+      return `${saludo} Tu pedido #${p.codigo} ya va en camino a ${p.direccion}${
+        p.repartidorId ? ` con ${nombreRepartidor(p.repartidorId)}` : ''
+      }.${p.costoDomicilio ? ` Recuerda que el domicilio cuesta ${pesos.format(p.costoDomicilio)}.` : ''}`;
     case 'listo_para_recoger':
       return `${saludo} Tu pedido #${p.codigo} está listo. Puedes pasar a recogerlo al local.`;
     case 'rechazado':
@@ -540,18 +641,11 @@ function textoMensaje(p) {
 
 function htmlMensaje(p) {
   if (p.estado === 'entregado' || (p.estado === 'pago_por_revisar' && estado.rechazando)) return '';
-  const costo =
-    p.estado === 'en_preparacion' && p.tipoEntrega === 'domicilio'
-      ? `<div class="campo campo-costo">
-          <label for="costo-domicilio">Costo del domicilio <small>(opcional, se agrega al mensaje)</small></label>
-          <input id="costo-domicilio" type="number" inputmode="numeric" min="0" step="500" placeholder="Ej.: 4000" value="${escapar(estado.costoDomicilio)}" />
-        </div>`
-      : '';
   const texto = textoMensaje(p);
+  if (!texto) return '';
   return `
     <section class="tarjeta tarjeta-mensaje">
       <h3>Mensaje para el cliente</h3>
-      ${costo}
       <div class="campo">
         <label class="solo-lector" for="mensaje-wa">Texto del mensaje</label>
         <textarea id="mensaje-wa" rows="4">${escapar(texto)}</textarea>
@@ -632,6 +726,71 @@ function abrirVisor(url) {
 function cerrarVisor() {
   $('#visor').hidden = true;
   document.querySelector('#detalle .miniatura')?.focus();
+}
+
+/* ---------- Equipo ---------- */
+
+let temporizadorCosto;
+
+async function abrirEquipo() {
+  $('#modal-equipo').hidden = false;
+  $('#lista-equipo').innerHTML = '<li class="nota">Cargando…</li>';
+  $('#cerrar-equipo').focus();
+  try {
+    pintarEquipo(await listarEquipo());
+  } catch (err) {
+    $('#lista-equipo').innerHTML = `<li class="error-campo">${escapar(err.message)}</li>`;
+  }
+}
+
+function cerrarEquipo() {
+  $('#modal-equipo').hidden = true;
+  $('#equipo').focus();
+}
+
+function pintarEquipo(lista) {
+  const opciones = [
+    ['', 'Sin acceso'],
+    ['personal', 'Personal (panel)'],
+    ['repartidor', 'Repartidor'],
+  ];
+  $('#lista-equipo').innerHTML = lista
+    .map(
+      (u) => `
+      <li class="fila-equipo" data-id="${u.user_id}">
+        <div class="fe-quien">
+          <label class="solo-lector" for="eq-nombre-${u.user_id}">Nombre</label>
+          <input id="eq-nombre-${u.user_id}" type="text" maxlength="60" placeholder="Nombre" value="${escapar(u.nombre ?? '')}" />
+          <small>${escapar(u.correo ?? '')}${u.yo ? ' · tú' : ''}</small>
+        </div>
+        <label class="solo-lector" for="eq-rol-${u.user_id}">Rol</label>
+        <select id="eq-rol-${u.user_id}" ${u.yo ? 'disabled' : ''}>
+          ${opciones.map(([v, t]) => `<option value="${v}"${(u.rol ?? '') === v ? ' selected' : ''}>${t}</option>`).join('')}
+        </select>
+        <button type="button" class="boton-barra" data-guardar>Guardar</button>
+      </li>`,
+    )
+    .join('');
+}
+
+async function guardarFilaEquipo(e) {
+  const boton = e.target.closest('[data-guardar]');
+  if (!boton) return;
+  const fila = boton.closest('.fila-equipo');
+  const id = fila.dataset.id;
+  const nombre = fila.querySelector('input').value.trim();
+  const rol = fila.querySelector('select').value || null;
+  boton.disabled = true;
+  try {
+    await guardarPerfil(id, { nombre, rol });
+    boton.textContent = 'Guardado';
+    setTimeout(() => (boton.textContent = 'Guardar'), 1800);
+    await recargarRepartidores();
+  } catch (err) {
+    avisar(err.message);
+  } finally {
+    boton.disabled = false;
+  }
 }
 
 /* ---------- Sonido ---------- */
@@ -767,13 +926,43 @@ function activarEventos() {
       estado.mensajeEditado = true;
       actualizarEnlaceWa();
     } else if (e.target.id === 'costo-domicilio') {
-      estado.costoDomicilio = e.target.value;
-      if (!estado.mensajeEditado) {
-        $('#mensaje-wa').value = textoMensaje(pedidoSeleccionado());
+      const p = pedidoSeleccionado();
+      if (!p) return;
+      const valor = e.target.value === '' ? null : Math.max(0, Math.round(Number(e.target.value)));
+      p.costoDomicilio = Number.isFinite(valor) ? valor : null;
+      if (!estado.mensajeEditado && $('#mensaje-wa')) {
+        $('#mensaje-wa').value = textoMensaje(p);
         actualizarEnlaceWa();
       }
+      clearTimeout(temporizadorCosto);
+      const id = p.id;
+      const guardar = p.costoDomicilio;
+      temporizadorCosto = setTimeout(() => guardarCostoDomicilio(id, guardar).catch((err) => avisar(err.message)), 700);
     }
   });
+
+  $('#detalle').addEventListener('change', async (e) => {
+    if (e.target.id !== 'asignar-repartidor') return;
+    const p = pedidoSeleccionado();
+    if (!p) return;
+    const id = e.target.value || null;
+    try {
+      await asignarRepartidor(p.id, id);
+      p.repartidorId = id;
+      pintarLista();
+      pintarDetalle({ conservarFormulario: true });
+      avisar(id ? `Pedido #${p.codigo} asignado a ${nombreRepartidor(id)}` : `Pedido #${p.codigo} disponible para cualquier repartidor`);
+    } catch (err) {
+      avisar(err.message);
+    }
+  });
+
+  $('#equipo').addEventListener('click', abrirEquipo);
+  $('#cerrar-equipo').addEventListener('click', cerrarEquipo);
+  $('#modal-equipo').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-equipo') cerrarEquipo();
+  });
+  $('#lista-equipo').addEventListener('click', guardarFilaEquipo);
 
   $('#recepcion').addEventListener('click', alternarRecepcion);
   $('#sonido').addEventListener('click', alternarSonido);
@@ -788,7 +977,8 @@ function activarEventos() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (!$('#visor').hidden) cerrarVisor();
+    if (!$('#modal-equipo').hidden) cerrarEquipo();
+    else if (!$('#visor').hidden) cerrarVisor();
     else if (document.body.classList.contains('detalle-abierto')) cerrarDetalle();
   });
 

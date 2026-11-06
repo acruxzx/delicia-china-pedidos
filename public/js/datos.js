@@ -2,7 +2,7 @@
 // Con Supabase configurado se usa la base de datos; si no, el "modo demo" con data/menu.json.
 
 import { CONFIG } from './config.js';
-import { agregarPedidoDemo, imagenLiviana, leerPedidosDemo, leerTiendaDemo } from './demo.js';
+import { agregarPedidoDemo, imagenLiviana, leerPedidosDemo, leerTiendaDemo, nombreEnEquipoDemo } from './demo.js';
 
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.9/+esm';
 
@@ -180,10 +180,16 @@ export async function enviarPedido(pedido) {
 export async function consultarEstado(id) {
   if (!supabaseConfigurado()) {
     const p = (leerPedidosDemo() ?? []).find((x) => x.id === id);
-    return p ? { estado: p.estado, motivoRechazo: p.motivoRechazo } : null;
+    if (!p) return null;
+    const conRepartidor = ['en_camino', 'entregado'].includes(p.estado) && p.repartidorId;
+    return {
+      estado: p.estado,
+      motivoRechazo: p.motivoRechazo,
+      repartidor: conRepartidor ? nombreEnEquipoDemo(p.repartidorId) : null,
+    };
   }
   const sb = await obtenerSupabase();
   const { data, error } = await sb.rpc('estado_pedido', { p_id: id });
   if (error) throw error;
-  return data ? { estado: data.estado, motivoRechazo: data.motivo_rechazo } : null;
+  return data ? { estado: data.estado, motivoRechazo: data.motivo_rechazo, repartidor: data.repartidor ?? null } : null;
 }

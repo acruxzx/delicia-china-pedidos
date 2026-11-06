@@ -8,7 +8,9 @@ import {
   CLAVES_DEMO,
   escucharDemo,
   guardarPedidosDemo,
+  guardarPerfilDemo,
   guardarTiendaDemo,
+  leerEquipoDemo,
   leerPedidosDemo,
   leerTiendaDemo,
 } from './demo.js';
@@ -60,6 +62,52 @@ export async function cerrarSesion() {
   await sb.auth.signOut();
 }
 
+/* ---------- Rol y equipo ---------- */
+
+// 'personal', 'repartidor' o null (sin acceso).
+export async function miRol() {
+  if (modoDemo()) return 'personal';
+  const sb = await obtenerSupabase();
+  const { data, error } = await sb.rpc('mi_rol');
+  // Si la base aún no tiene roles (falta 05-repartidores.sql), todos los usuarios son personal.
+  if (error?.code === 'PGRST202') return 'personal';
+  if (error) throw error;
+  return data ?? null;
+}
+
+export async function listarRepartidores() {
+  if (modoDemo()) {
+    return leerEquipoDemo()
+      .filter((x) => x.rol === 'repartidor' && x.activo)
+      .map((x) => ({ id: x.user_id, nombre: x.nombre || x.correo }));
+  }
+  const sb = await obtenerSupabase();
+  const { data, error } = await sb.from('perfiles').select('user_id, nombre, rol, activo');
+  if (error) return []; // sin la tabla de perfiles: no hay repartidores registrados
+  return data
+    .filter((x) => x.rol === 'repartidor')
+    .map((x) => ({ id: x.user_id, nombre: x.nombre || 'Repartidor', activo: x.activo }));
+}
+
+export async function listarEquipo() {
+  if (modoDemo()) return leerEquipoDemo().map((x) => ({ ...x, yo: x.user_id === 'demo-caja' }));
+  const sb = await obtenerSupabase();
+  const { data, error } = await sb.rpc('listar_equipo');
+  if (error?.code === 'PGRST202') throw new Error('Falta ejecutar 05-repartidores.sql en Supabase.');
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function guardarPerfil(userId, { nombre, rol }) {
+  if (modoDemo()) {
+    guardarPerfilDemo(userId, { nombre, rol, activo: true });
+    return;
+  }
+  const sb = await obtenerSupabase();
+  const { error } = await sb.rpc('guardar_perfil', { p_user_id: userId, p_nombre: nombre, p_rol: rol, p_activo: true });
+  if (error) throw new Error(error.message);
+}
+
 /* ---------- Pedidos ---------- */
 
 // Forma común de un pedido en el panel:
@@ -108,6 +156,10 @@ function desdeFila(f) {
       .sort((a, b) => a.id - b.id)
       .map((i) => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precio_unitario, opciones: i.opciones ?? [], nota: i.nota ?? '' })),
     comprobante: f.comprobante_path,
+    repartidorId: f.repartidor_id ?? null,
+    costoDomicilio: f.costo_domicilio ?? null,
+    salioEn: f.salio_en ?? null,
+    entregadoEn: f.entregado_en ?? null,
     ubicacion:
       f.ubicacion_lat != null && f.ubicacion_lng != null
         ? { lat: f.ubicacion_lat, lng: f.ubicacion_lng, precision: f.ubicacion_precision_m }
@@ -133,6 +185,28 @@ export async function cambiarEstado(id, estado, motivoRechazo = null) {
   const sb = await obtenerSupabase();
   const { error } = await sb.from('pedidos').update({ estado, motivo_rechazo: motivoRechazo }).eq('id', id);
   if (error) throw new Error('No se pudo guardar el cambio. Revisa la conexión e inténtalo de nuevo.');
+}
+
+export async function asignarRepartidor(id, repartidorId) {
+  if (modoDemo()) {
+    actualizarPedidoDemo(id, { repartidorId: repartidorId || null });
+    return;
+  }
+  const sb = await obtenerSupabase();
+  const { error } = await sb.from('pedidos').update({ repartidor_id: repartidorId || null }).eq('id', id);
+  if (error) throw new Error('No se pudo asignar el repartidor. Revisa la conexión.');
+}
+
+export async function guardarCostoDomicilio(id, valor) {
+  if (modoDemo()) {
+    actualizarPedidoDemo(id, { costoDomicilio: valor });
+    return;
+  }
+  const sb = await obtenerSupabase();
+  const { error } = await sb.from('pedidos').update({ costo_domicilio: valor }).eq('id', id);
+  // Sin 05-repartidores.sql la columna no existe: el costo solo va en el mensaje de WhatsApp.
+  if (error?.code === 'PGRST204') return;
+  if (error) throw new Error('No se pudo guardar el costo del domicilio.');
 }
 
 const urlsFirmadas = new Map();
@@ -177,7 +251,9 @@ export async function cambiarRecepcion(abierto) {
 // callback(tipo) con tipo 'pedidos' o 'tienda'.
 export async function escucharCambios(callback) {
   if (modoDemo()) {
-    return escucharDemo((clave) => callback(clave === CLAVES_DEMO.tienda ? 'tienda' : 'pedidos'));
+    return escucharDemo((clave) =>
+      callback(clave === CLAVES_DEMO.tienda ? 'tienda' : clave === CLAVES_DEMO.equipo ? 'equipo' : 'pedidos'),
+    );
   }
   const sb = await obtenerSupabase();
   const canal = sb

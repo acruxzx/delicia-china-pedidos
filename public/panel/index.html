@@ -62,6 +62,7 @@
             <span id="texto-sonido">Activar sonido</span>
           </button>
           <button id="simular" type="button" class="boton-barra" hidden>Simular pedido</button>
+          <button id="equipo" type="button" class="boton-barra">Equipo</button>
           <a class="boton-barra" href="/" target="_blank" rel="noopener">Ver menú</a>
           <button id="salir" type="button" class="boton-barra">Salir</button>
         </div>
@@ -101,6 +102,25 @@
             <p>Elige un pedido de la lista para ver el detalle y el comprobante.</p>
           </div>
         </section>
+      </div>
+    </div>
+
+    <!-- Equipo: roles de personal y repartidores -->
+    <div id="modal-equipo" class="modal" role="dialog" aria-modal="true" aria-labelledby="titulo-equipo" hidden>
+      <div class="modal-caja">
+        <div class="modal-cabecera">
+          <h2 id="titulo-equipo">Equipo</h2>
+          <button id="cerrar-equipo" type="button" class="cerrar" aria-label="Cerrar">×</button>
+        </div>
+        <p class="nota">
+          <strong>Personal</strong> usa este panel. <strong>Repartidor</strong> usa la app del repartidor
+          (<span class="seleccionable">/repartidor</span>) en su celular. <strong>Sin acceso</strong> no puede entrar.
+        </p>
+        <ul id="lista-equipo" class="lista-equipo"></ul>
+        <p class="nota">
+          Para agregar a alguien: en Supabase, Authentication → Users → Add user, con su correo y una contraseña
+          (marca «Auto Confirm User»). Aparecerá aquí como «Sin acceso» para que le asignes un rol.
+        </p>
       </div>
     </div>
 

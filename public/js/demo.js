@@ -6,6 +6,7 @@ import { CONFIG } from './config.js';
 
 const CLAVE_PEDIDOS = 'delicia-china:demo-pedidos';
 const CLAVE_TIENDA = 'delicia-china:demo-tienda';
+const CLAVE_EQUIPO = 'delicia-china:demo-equipo';
 const MAX_PEDIDOS = 25;
 
 export const EVENTO_DEMO = 'delicia-china:demo-cambio';
@@ -69,15 +70,51 @@ export function agregarPedidoDemo(pedido) {
   return nuevo;
 }
 
+// Igual que en la base de datos: guarda la hora de salida y de entrega.
 export function actualizarPedidoDemo(id, cambios) {
   const lista = leerPedidosDemo() ?? [];
-  guardarPedidosDemo(lista.map((p) => (p.id === id ? { ...p, ...cambios, actualizadoEn: new Date().toISOString() } : p)));
+  const ahora = new Date().toISOString();
+  guardarPedidosDemo(
+    lista.map((p) => {
+      if (p.id !== id) return p;
+      const n = { ...p, ...cambios, actualizadoEn: ahora };
+      if (n.estado === 'en_camino' && p.estado !== 'en_camino') n.salioEn ??= ahora;
+      if (n.estado === 'entregado' && p.estado !== 'entregado') n.entregadoEn = ahora;
+      if (['pago_por_revisar', 'en_preparacion', 'esperando_repartidor'].includes(n.estado)) n.salioEn = null;
+      return n;
+    }),
+  );
+}
+
+/* ---------- Equipo (personal y repartidores) ---------- */
+
+const EQUIPO_INICIAL = [
+  { user_id: 'demo-caja', correo: 'caja@ejemplo.co', nombre: 'Caja', rol: 'personal', activo: true },
+  { user_id: 'demo-carlos', correo: 'carlos@ejemplo.co', nombre: 'Carlos', rol: 'repartidor', activo: true },
+  { user_id: 'demo-yeison', correo: 'yeison@ejemplo.co', nombre: 'Yeison', rol: 'repartidor', activo: true },
+  { user_id: 'demo-nuevo', correo: 'nuevo@ejemplo.co', nombre: '', rol: null, activo: true },
+];
+
+export function leerEquipoDemo() {
+  const e = leerJSON(CLAVE_EQUIPO, null);
+  return Array.isArray(e) ? e : EQUIPO_INICIAL.map((x) => ({ ...x }));
+}
+
+export function guardarPerfilDemo(userId, cambios) {
+  guardarJSON(
+    CLAVE_EQUIPO,
+    leerEquipoDemo().map((x) => (x.user_id === userId ? { ...x, ...cambios } : x)),
+  );
+}
+
+export function nombreEnEquipoDemo(userId) {
+  return leerEquipoDemo().find((x) => x.user_id === userId)?.nombre || null;
 }
 
 // Avisa cuando otra pestaña (o esta misma) cambia el almacén demo.
 export function escucharDemo(callback) {
   const alCambiarOtraPestana = (e) => {
-    if (e.key === CLAVE_PEDIDOS || e.key === CLAVE_TIENDA) callback(e.key);
+    if (e.key === CLAVE_PEDIDOS || e.key === CLAVE_TIENDA || e.key === CLAVE_EQUIPO) callback(e.key);
   };
   const alCambiarAqui = (e) => callback(e.detail.clave);
   window.addEventListener('storage', alCambiarOtraPestana);
@@ -88,7 +125,7 @@ export function escucharDemo(callback) {
   };
 }
 
-export const CLAVES_DEMO = { pedidos: CLAVE_PEDIDOS, tienda: CLAVE_TIENDA };
+export const CLAVES_DEMO = { pedidos: CLAVE_PEDIDOS, tienda: CLAVE_TIENDA, equipo: CLAVE_EQUIPO };
 
 /* ---------- Imagen liviana para guardar en el navegador ---------- */
 

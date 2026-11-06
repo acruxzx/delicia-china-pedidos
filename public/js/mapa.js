@@ -56,6 +56,7 @@ export function icono(L, tipo) {
   const colores = {
     cliente: ['#d6a645', '#131718'],
     local: ['#c2453a', '#ffffff'],
+    disponible: ['#eee7d6', '#131718'],
   };
   const [relleno, punto] = colores[tipo] ?? colores.cliente;
   return L.divIcon({

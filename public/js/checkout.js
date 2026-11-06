@@ -14,6 +14,7 @@ const ESTADOS_FINALES = ['entregado', 'rechazado'];
 const PASOS = {
   pago_por_revisar: 0,
   en_preparacion: 1,
+  esperando_repartidor: 1,
   en_camino: 2,
   listo_para_recoger: 2,
   entregado: 3,
@@ -22,6 +23,7 @@ const PASOS = {
 const TEXTO_ESTADO = {
   pago_por_revisar: 'Revisando tu pago',
   en_preparacion: 'En preparación',
+  esperando_repartidor: 'Listo, sale en un momento',
   en_camino: 'En camino',
   listo_para_recoger: 'Listo para recoger',
   entregado: 'Entregado',
@@ -319,7 +321,10 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
     const mensaje = {
       pago_por_revisar: `Estamos revisando tu comprobante. Te confirmaremos por WhatsApp al <strong>${tel}</strong>.`,
       en_preparacion: '¡Pago confirmado! Ya estamos preparando tu pedido.',
-      en_camino: `Tu pedido va en camino${p.direccion ? ` a ${escapar(p.direccion)}` : ''}.`,
+      esperando_repartidor: 'Tu pedido está listo y empacado. Sale en un momento con nuestro repartidor.',
+      en_camino: `Tu pedido va en camino${p.direccion ? ` a ${escapar(p.direccion)}` : ''}${
+        p.repartidor ? ` con <strong>${escapar(p.repartidor)}</strong>` : ''
+      }.`,
       listo_para_recoger: 'Tu pedido está listo. Puedes pasar a recogerlo al local.',
       entregado: 'Pedido entregado. ¡Buen provecho!',
       rechazado: `No pudimos confirmar tu pago${p.motivoRechazo ? `: ${escapar(p.motivoRechazo)}` : ''}. Escríbenos por WhatsApp y te ayudamos.`,
@@ -370,9 +375,9 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
     try {
       const r = await consultarEstado(ultimo.id);
       if (!r) return;
-      if (r.estado !== ultimo.estado || r.motivoRechazo !== ultimo.motivoRechazo) {
+      if (r.estado !== ultimo.estado || r.motivoRechazo !== ultimo.motivoRechazo || (r.repartidor ?? null) !== (ultimo.repartidor ?? null)) {
         const antes = ultimo.estado;
-        ultimo = { ...ultimo, estado: r.estado, motivoRechazo: r.motivoRechazo, oculto: false };
+        ultimo = { ...ultimo, estado: r.estado, motivoRechazo: r.motivoRechazo, repartidor: r.repartidor ?? null, oculto: false };
         guardarSeguimiento();
         pintarListo();
         pintarBanner();

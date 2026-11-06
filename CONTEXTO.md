@@ -1,7 +1,7 @@
 # Piloto: app de pedidos para Delicia China (restaurante de comida china)
 
 Fecha del documento: 4 de noviembre de 2026
-Estado: piloto completo con Supabase; geolocalización fase 1 lista
+Estado: piloto completo con Supabase; ubicación del cliente y app del repartidor listas
 
 ## 1. Contexto
 
@@ -161,5 +161,5 @@ Propuesta de avance por semanas (a ajustar):
 **Geolocalización (6 de noviembre de 2026)**
 - Fase 1 hecha: ubicación opcional del cliente (GPS o tocando el mapa, pin movible), guardada con el pedido y borrada a los 7 días (04-ubicacion.sql). Panel con mapa, distancia y botones de ruta (Google Maps, Waze).
 - Local: Cra. 15, Piedecuesta (6.99184, -73.04639). Repartidores propios (cantidad por confirmar).
-- Fase 2 pendiente: panel de repartidores (/repartidor) con pedidos asignados.
+- Fase 2 hecha (6 de noviembre de 2026): app del repartidor en /repartidor. Cada repartidor tiene su celular. Funcionan las dos formas de reparto a la vez (decisión en espera): el primero que pulse «Salir con el pedido» se lo lleva, o quien despacha lo asigna desde el panel. Roles personal/repartidor en la tabla perfiles (05-repartidores.sql); botón Equipo en el panel. Costo del domicilio guardado y visible para el repartidor. El cliente ve el nombre del repartidor.
 - Fase 3 pendiente: seguimiento en vivo del repartidor (limitado: el navegador solo envía la ubicación con la página abierta).

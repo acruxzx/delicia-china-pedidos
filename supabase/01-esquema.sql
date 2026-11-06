@@ -3,11 +3,13 @@
 -- Esquema de la base de datos para Supabase (plan gratuito).
 --
 -- Cómo usarlo: en el panel de Supabase abre "SQL Editor", pega este
--- archivo completo y pulsa "Run". Después ejecuta 02-datos-ejemplo.sql.
+-- archivo completo y pulsa "Run". Después ejecuta 02-datos-ejemplo.sql
+-- y 05-repartidores.sql (03 y 04 ya están incluidos aquí).
 --
 -- Roles de Supabase:
 --   anon          = cualquier visitante de la web (el cliente).
---   authenticated = personal del restaurante que inició sesión en el panel.
+--   authenticated = usuario con sesión iniciada. Qué puede hacer depende de su
+--                   rol en la tabla perfiles (05-repartidores.sql): personal o repartidor.
 -- =====================================================================
 
 

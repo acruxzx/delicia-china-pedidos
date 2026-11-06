@@ -22,8 +22,23 @@ el cliente pide desde el celular, sube el comprobante de pago y el local lo apru
   - **Mensaje de WhatsApp** listo para cada estado, editable, con campo opcional para el costo del domicilio. El botón abre el chat con el cliente; el empleado solo pulsa enviar.
   - Interruptor para **abrir o cerrar la recepción** de pedidos.
   - **Buscador** por número de pedido, nombre o celular.
+  - **Despacho a domicilio:** con repartidores registrados, el pedido pasa de «En preparación» a **Listo para despachar**. Se puede dejar para «el primero que lo tome» o **asignarlo** a un repartidor. El **costo del domicilio** se guarda y lo ve el repartidor.
+  - **Equipo:** botón para dar rol a cada usuario (Personal, Repartidor o Sin acceso).
   - **Ubicación de entrega:** mapa con el local y el cliente, distancia en línea recta y botones **Ruta en Google Maps** y **Ruta en Waze**. Si el cliente no compartió ubicación, botón para buscar la dirección en Google Maps.
   - La pantalla se mantiene encendida mientras el panel está abierto (si el navegador lo permite).
+
+- **App del repartidor en `/repartidor`** (celular):
+  - **En camino** y **Para salir**, con dirección, cliente, distancia, notas, productos y cuánto cobrar de domicilio.
+  - **Salir con el pedido** (si dos lo intentan a la vez, solo uno lo consigue), **Entregado** con confirmación y **No puedo llevarlo** para devolverlo.
+  - Botones de **Google Maps**, **Waze**, **Llamar** y **WhatsApp** al cliente; **Mapa** opcional con todos los pedidos.
+  - Se actualiza cada 15 segundos, vibra con pedidos nuevos y mantiene la pantalla encendida.
+- El cliente ve «Listo, sale en un momento» y luego «en camino con Carlos».
+
+### Roles
+
+- **Personal:** usa `/panel`. Los usuarios que ya existían al ejecutar `05-repartidores.sql` quedan como personal.
+- **Repartidor:** usa `/repartidor`. Solo ve los pedidos que puede llevar, mediante funciones de la base de datos.
+- **Agregar a alguien:** Supabase → Authentication → Users → Add user (marcar «Auto Confirm User»). Luego, en el panel, **Equipo** → asignarle el rol.
 
 ### Modo demo
 
@@ -52,6 +67,7 @@ delicia-china-pedidos/
 │   ├── index.html            Pantalla del cliente
 │   ├── css/estilos.css       Estilos (negro y dorado, como el logo)
 │   ├── css/panel.css         Estilos del panel
+│   ├── css/repartidor.css    Estilos de la app del repartidor
 │   ├── js/
 │   │   ├── config.js         Nombre, datos de Supabase y valores del modo demo
 │   │   ├── datos.js          Lee el menú y envía pedidos (Supabase o modo demo)
@@ -61,16 +77,20 @@ delicia-china-pedidos/
 │   │   ├── demo.js           Almacén del modo demo, compartido por la web y el panel
 │   │   ├── mapa.js           Mapas (Leaflet + OpenStreetMap, cargados solo al usarlos), distancias y rutas
 │   │   ├── ubicacion-cliente.js  Botón "Usar mi ubicación" y pin en el formulario
-│   │   ├── panel-datos.js    Datos del panel: sesión, pedidos, estados, comprobantes, tienda
-│   │   └── panel.js          Pantalla del panel
+│   │   ├── panel-datos.js    Datos del panel: sesión, rol, equipo, pedidos, estados, comprobantes, tienda
+│   │   ├── panel.js          Pantalla del panel
+│   │   ├── repartidor-datos.js   Datos de la app del repartidor
+│   │   └── repartidor.js         App del repartidor
 │   ├── panel/index.html      Panel del restaurante (/panel)
+│   ├── repartidor/index.html App del repartidor (/repartidor)
 │   ├── data/menu.json        Menú genérico de ejemplo
 │   └── img/                  Logo, ícono y favicon
 ├── supabase/
 │   ├── 01-esquema.sql        Tablas, seguridad, función crear_pedido y bucket de comprobantes
 │   ├── 02-datos-ejemplo.sql  Configuración y menú de ejemplo
 │   ├── 03-seguimiento.sql    Función estado_pedido (solo si el esquema se instaló antes de ese cambio)
-│   └── 04-ubicacion.sql      Ubicación del domicilio (solo si el esquema se instaló antes de ese cambio)
+│   ├── 04-ubicacion.sql      Ubicación del domicilio (solo si el esquema se instaló antes de ese cambio)
+│   └── 05-repartidores.sql   Roles (personal/repartidor), despacho y funciones del repartidor (siempre)
 ├── README.md
 └── CONTEXTO.md               Decisiones y avance del piloto
 ```
