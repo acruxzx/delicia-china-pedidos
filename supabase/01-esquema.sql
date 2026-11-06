@@ -74,6 +74,11 @@ create table public.pedidos (
                       'entregado',
                       'rechazado')),
   motivo_rechazo    text,
+  -- Ubicación que el cliente comparte para el domicilio (opcional).
+  -- Se borra sola a los 7 días (ver crear_pedido).
+  ubicacion_lat     double precision check (ubicacion_lat between -90 and 90),
+  ubicacion_lng     double precision check (ubicacion_lng between -180 and 180),
+  ubicacion_precision_m int check (ubicacion_precision_m >= 0),
   creado_en         timestamptz not null default now(),
   actualizado_en    timestamptz not null default now(),
   constraint direccion_si_domicilio check (
@@ -125,7 +130,10 @@ create or replace function public.crear_pedido(
   p_notas            text,
   p_metodo_pago      text,
   p_comprobante_path text,
-  p_items            jsonb   -- [{ "plato_id": 12, "cantidad": 2, "opciones": ["Sin cebolla"], "nota": "" }]
+  p_items            jsonb,  -- [{ "plato_id": 12, "cantidad": 2, "opciones": ["Sin cebolla"], "nota": "" }]
+  p_lat              double precision default null,  -- ubicación opcional del domicilio
+  p_lng              double precision default null,
+  p_precision_m      int default null
 )
 returns jsonb
 language plpgsql
@@ -163,13 +171,26 @@ begin
     raise exception 'Falta el comprobante de pago.';
   end if;
 
+  if (p_lat is null) <> (p_lng is null)
+     or p_lat not between -90 and 90 or p_lng not between -180 and 180 then
+    raise exception 'La ubicación no es válida. Vuelve a marcarla o envía el pedido solo con la dirección.';
+  end if;
+
+  -- Privacidad: las ubicaciones de pedidos de hace más de 7 días se borran.
+  update public.pedidos
+     set ubicacion_lat = null, ubicacion_lng = null, ubicacion_precision_m = null
+   where ubicacion_lat is not null and creado_en < now() - interval '7 days';
+
   insert into public.pedidos (
     cliente_nombre, cliente_telefono, tipo_entrega, direccion, notas,
-    metodo_pago, comprobante_path
+    metodo_pago, comprobante_path, ubicacion_lat, ubicacion_lng, ubicacion_precision_m
   ) values (
     trim(p_cliente_nombre), p_cliente_telefono, p_tipo_entrega,
     case when p_tipo_entrega = 'domicilio' then trim(p_direccion) end,
-    nullif(trim(p_notas), ''), p_metodo_pago, p_comprobante_path
+    nullif(trim(p_notas), ''), p_metodo_pago, p_comprobante_path,
+    case when p_tipo_entrega = 'domicilio' then p_lat end,
+    case when p_tipo_entrega = 'domicilio' then p_lng end,
+    case when p_tipo_entrega = 'domicilio' and p_lat is not null then greatest(0, p_precision_m) end
   )
   returning * into v_pedido;
 
@@ -204,8 +225,8 @@ begin
   return jsonb_build_object('id', v_pedido.id, 'codigo', v_pedido.codigo, 'total', v_total);
 end $$;
 
-revoke all on function public.crear_pedido(text, text, text, text, text, text, text, jsonb) from public;
-grant execute on function public.crear_pedido(text, text, text, text, text, text, text, jsonb) to anon, authenticated;
+revoke all on function public.crear_pedido(text, text, text, text, text, text, text, jsonb, double precision, double precision, int) from public;
+grant execute on function public.crear_pedido(text, text, text, text, text, text, text, jsonb, double precision, double precision, int) to anon, authenticated;
 
 
 -- Seguimiento: el cliente consulta el estado de SU pedido por el id (uuid).

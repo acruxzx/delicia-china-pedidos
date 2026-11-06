@@ -128,6 +128,7 @@ export async function enviarPedido(pedido) {
         nota: l.nota,
       })),
       comprobante: await imagenLiviana(pedido.comprobante.blob),
+      ubicacion: pedido.ubicacion ?? null,
     });
     return { id: guardado.id, codigo: guardado.codigo, total, demo: true };
   }
@@ -143,7 +144,7 @@ export async function enviarPedido(pedido) {
     throw new Error('No se pudo subir el comprobante. Revisa tu conexión e inténtalo de nuevo.');
   }
 
-  const { data, error } = await sb.rpc('crear_pedido', {
+  const parametros = {
     p_cliente_nombre: pedido.nombre,
     p_cliente_telefono: pedido.telefono,
     p_tipo_entrega: pedido.tipoEntrega,
@@ -152,7 +153,21 @@ export async function enviarPedido(pedido) {
     p_metodo_pago: pedido.metodoPago,
     p_comprobante_path: ruta,
     p_items: items,
-  });
+  };
+  if (pedido.ubicacion) {
+    parametros.p_lat = pedido.ubicacion.lat;
+    parametros.p_lng = pedido.ubicacion.lng;
+    parametros.p_precision_m = pedido.ubicacion.precision;
+  }
+  let { data, error } = await sb.rpc('crear_pedido', parametros);
+  // Si la base de datos aún no tiene la ubicación (falta 04-ubicacion.sql), se envía sin ella.
+  if (error && pedido.ubicacion && error.code === 'PGRST202') {
+    console.warn('crear_pedido sin ubicación: falta ejecutar 04-ubicacion.sql en Supabase.');
+    delete parametros.p_lat;
+    delete parametros.p_lng;
+    delete parametros.p_precision_m;
+    ({ data, error } = await sb.rpc('crear_pedido', parametros));
+  }
   if (error) {
     console.error(error);
     // Los mensajes de crear_pedido ya están escritos para el cliente.

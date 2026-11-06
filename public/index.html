@@ -121,6 +121,27 @@
                 placeholder="Calle 5 # 3-20, barrio San Rafael" aria-describedby="err-direccion" />
               <p id="err-direccion" class="error-campo" hidden></p>
             </div>
+            <div id="bloque-ubicacion" class="bloque-ubicacion">
+              <div class="ubicacion-cabecera">
+                <button type="button" id="usar-ubicacion" class="boton-ubicacion">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                    <path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" fill="none" stroke="currentColor" stroke-width="2" />
+                    <circle cx="12" cy="9" r="2.5" fill="currentColor" />
+                  </svg>
+                  <span id="texto-usar-ubicacion">Usar mi ubicación actual</span>
+                </button>
+                <small>Opcional. Ayuda al repartidor a encontrarte.</small>
+              </div>
+              <p id="error-ubicacion" class="aviso-ubicacion" role="status" hidden></p>
+              <div id="mapa-cliente-envoltura" class="mapa-cliente-envoltura" hidden>
+                <div id="mapa-cliente" class="mapa-cliente" aria-label="Mapa para marcar el lugar de entrega"></div>
+                <div class="fila-info-ubicacion">
+                  <p id="info-ubicacion" class="nota" aria-live="polite"></p>
+                  <button type="button" id="quitar-ubicacion" class="enlace" hidden>Quitar</button>
+                </div>
+              </div>
+              <p class="nota">Solo usamos tu ubicación para entregar este pedido y la borramos a los 7 días.</p>
+            </div>
             <p id="nota-domicilio-pedido" class="nota">El costo del domicilio no está incluido; te lo confirmamos por WhatsApp.</p>
             <div class="campo">
               <label for="f-notas">Indicaciones <small>(opcional)</small></label>

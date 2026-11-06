@@ -108,6 +108,10 @@ function desdeFila(f) {
       .sort((a, b) => a.id - b.id)
       .map((i) => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precio_unitario, opciones: i.opciones ?? [], nota: i.nota ?? '' })),
     comprobante: f.comprobante_path,
+    ubicacion:
+      f.ubicacion_lat != null && f.ubicacion_lng != null
+        ? { lat: f.ubicacion_lat, lng: f.ubicacion_lng, precision: f.ubicacion_precision_m }
+        : null,
     ejemplo: false,
   };
 }
@@ -185,12 +189,13 @@ export async function escucharCambios(callback) {
 
 /* ---------- Simulación (solo demo) ---------- */
 
+// Ubicaciones inventadas alrededor del local, solo para el modo demo.
 const CLIENTES = [
-  ['Laura Gómez', '3104567890', 'domicilio', 'Carrera 7 # 12-45, barrio Centro'],
-  ['Andrés Rincón', '3157894561', 'recoger', null],
-  ['María Fernanda Ortiz', '3209876543', 'domicilio', 'Calle 3 # 8-10, barrio La Feria'],
-  ['Jorge Pabón', '3001112233', 'domicilio', 'Transversal 4 # 2-30, conjunto Los Pinos, torre 2'],
-  ['Camila Duarte', '3186543210', 'recoger', null],
+  ['Laura Gómez', '3104567890', 'domicilio', 'Carrera 7 # 12-45, barrio Centro', { lat: 6.98712, lng: -73.04981, precision: 18 }],
+  ['Andrés Rincón', '3157894561', 'recoger', null, null],
+  ['María Fernanda Ortiz', '3209876543', 'domicilio', 'Calle 3 # 8-10, barrio La Feria', { lat: 6.99655, lng: -73.04402, precision: 35 }],
+  ['Jorge Pabón', '3001112233', 'domicilio', 'Transversal 4 # 2-30, conjunto Los Pinos, torre 2', null],
+  ['Camila Duarte', '3186543210', 'recoger', null, null],
 ];
 
 const PLATOS = [
@@ -212,7 +217,7 @@ function azar(lista) {
 }
 
 function pedidoAleatorio(minutosAtras = 0) {
-  const [nombre, telefono, tipoEntrega, direccion] = azar(CLIENTES);
+  const [nombre, telefono, tipoEntrega, direccion, ubicacion] = azar(CLIENTES);
   const cuantos = 1 + Math.floor(Math.random() * 3);
   const elegidos = [...PLATOS].sort(() => Math.random() - 0.5).slice(0, cuantos);
   const items = elegidos.map(([n, precio], i) => ({
@@ -239,6 +244,7 @@ function pedidoAleatorio(minutosAtras = 0) {
     motivoRechazo: null,
     items,
     comprobante: comprobanteFalso(metodoPago, total),
+    ubicacion,
     ejemplo: true,
   };
 }

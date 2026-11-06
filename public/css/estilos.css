@@ -1504,3 +1504,108 @@ body.tienda-cerrada .boton-principal:disabled {
   color: #f08a7e;
   font-weight: 700;
 }
+
+/* =====================================================================
+   Ubicación del domicilio y mapas
+   ===================================================================== */
+
+.bloque-ubicacion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ubicacion-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.ubicacion-cabecera small {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+.boton-ubicacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--oro);
+  background: color-mix(in srgb, var(--oro) 10%, transparent);
+  color: var(--oro-vivo);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.boton-ubicacion:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.aviso-ubicacion {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radio);
+  border: 1px solid var(--filete);
+  background: var(--tinta);
+  font-size: 0.875rem;
+}
+
+.mapa-cliente-envoltura {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mapa-cliente,
+.hueco-mapa,
+.mapa-panel {
+  width: 100%;
+  border-radius: var(--radio);
+  border: 1px solid var(--filete);
+  overflow: hidden;
+  background: var(--laca-alta);
+}
+
+.mapa-cliente {
+  height: 260px;
+}
+
+.fila-info-ubicacion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fila-info-ubicacion .nota {
+  min-width: 0;
+}
+
+.fila-info-ubicacion .enlace {
+  flex: none;
+  padding-top: 0;
+}
+
+#info-ubicacion.lejos {
+  color: #f0b37e;
+}
+
+/* Pines dibujados con SVG (Leaflet les pone fondo blanco por defecto) */
+.pin-mapa {
+  background: none;
+  border: 0;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+
+.leaflet-container {
+  font: inherit;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}

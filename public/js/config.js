@@ -5,6 +5,13 @@
 export const CONFIG = {
   nombre: 'Delicia China',
   lema: 'El sabor tradicional de China en Piedecuesta',
+  ciudad: 'Piedecuesta, Santander',
+
+  // Ubicación del local (Cra. 15, Piedecuesta). Centra los mapas y sirve para calcular distancias.
+  ubicacionLocal: { lat: 6.99184, lng: -73.04639 },
+
+  // A partir de esta distancia (km en línea recta) se le pregunta al cliente si su ubicación es correcta.
+  distanciaMaximaKm: 15,
 
   // Supabase. La clave "publishable" es pública por diseño: la seguridad la dan
   // las reglas de la base de datos (RLS). Nunca poner aquí la clave "secret".

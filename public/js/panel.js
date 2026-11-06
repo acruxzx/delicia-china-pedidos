@@ -2,6 +2,7 @@
 // avanzar estados, avisar por WhatsApp y abrir o cerrar la recepción de pedidos.
 
 import { NOMBRES_PAGO } from './config.js';
+import { cargarLeaflet, crearMapa, distanciaKm, enlaceBusqueda, enlacesRuta, icono, LOCAL, textoDistancia } from './mapa.js';
 import {
   cambiarEstado,
   cambiarRecepcion,
@@ -224,7 +225,11 @@ function pintarLista() {
             </span>
             <span class="tp-nombre">${escapar(p.nombre)}</span>
             <span class="tp-fila">
-              <span class="tp-entrega">${p.tipoEntrega === 'domicilio' ? 'Domicilio' : 'Recoger'} · ${unidades} ${unidades === 1 ? 'producto' : 'productos'}</span>
+              <span class="tp-entrega">${
+                p.tipoEntrega === 'domicilio'
+                  ? `Domicilio${p.ubicacion ? ` · ${textoDistancia(distanciaKm(LOCAL, p.ubicacion))}` : ''}`
+                  : 'Recoger'
+              } · ${unidades} ${unidades === 1 ? 'producto' : 'productos'}</span>
               <strong class="tp-total">${pesos.format(p.total)}</strong>
             </span>
             ${estado.filtro === 'revisar' && !buscando ? '' : `<span class="pastilla-estado ${e.clase}">${e.texto}</span>`}
@@ -342,6 +347,8 @@ async function pintarDetalle({ conservarFormulario = false } = {}) {
           ${p.notas ? `<p class="cliente-notas">“${escapar(p.notas)}”</p>` : ''}
         </section>
 
+        ${htmlUbicacion(p)}
+
         <section class="tarjeta">
           <h3>Platos</h3>
           <ul class="items">
@@ -385,6 +392,8 @@ async function pintarDetalle({ conservarFormulario = false } = {}) {
   }
   if (focoId) document.getElementById(focoId)?.focus({ preventScroll: true });
 
+  ponerMapa(p); // sin esperar: el comprobante carga en paralelo
+
   const url = await urlComprobante(p);
   if (pedidoSeleccionado()?.id !== p.id) return;
   const mini = contenedor.querySelector('.miniatura');
@@ -393,6 +402,73 @@ async function pintarDetalle({ conservarFormulario = false } = {}) {
     ? `<img src="${url}" alt="Comprobante del pedido #${p.codigo}" />`
     : '<span class="cargando-img">No se pudo cargar el comprobante.</span>';
   mini.dataset.url = url ?? '';
+}
+
+/* ---------- Ubicación y mapa ---------- */
+
+function htmlUbicacion(p) {
+  if (p.tipoEntrega !== 'domicilio') return '';
+  if (!p.ubicacion) {
+    return `
+      <section class="tarjeta">
+        <h3>Ubicación de entrega</h3>
+        <p class="nota">El cliente no compartió su ubicación. Usa la dirección escrita.</p>
+        <a class="boton-ruta" href="${enlaceBusqueda(p.direccion ?? '')}" target="_blank" rel="noopener">Buscar la dirección en Google Maps</a>
+      </section>`;
+  }
+  const km = distanciaKm(LOCAL, p.ubicacion);
+  const rutas = enlacesRuta(p.ubicacion);
+  const precision = p.ubicacion.precision != null ? ` · precisión aprox. ${p.ubicacion.precision} m` : ' · el cliente puso el pin a mano';
+  return `
+    <section class="tarjeta">
+      <h3>Ubicación de entrega</h3>
+      <div class="hueco-mapa"></div>
+      <p class="nota">A ${textoDistancia(km)} del local en línea recta${precision}.</p>
+      <div class="fila-rutas">
+        <a class="boton-ruta" href="${rutas.google}" target="_blank" rel="noopener">Ruta en Google Maps</a>
+        <a class="boton-ruta" href="${rutas.waze}" target="_blank" rel="noopener">Ruta en Waze</a>
+      </div>
+    </section>`;
+}
+
+// Un solo mapa que se reutiliza: al volver a pintar el detalle se mueve al nuevo hueco
+// en lugar de crearse otra vez (así no se recargan los cuadros del mapa en cada actualización).
+const mapaPanel = { contenedor: null, mapa: null, cliente: null, local: null, pedidoId: null };
+
+async function ponerMapa(p) {
+  const hueco = document.querySelector('#detalle .hueco-mapa');
+  if (!hueco || !p.ubicacion) return;
+  mapaPanel.contenedor ??= Object.assign(document.createElement('div'), { className: 'mapa-panel' });
+  hueco.append(mapaPanel.contenedor);
+
+  let L;
+  try {
+    L = await cargarLeaflet();
+  } catch {
+    hueco.innerHTML = '<p class="nota">No se pudo cargar el mapa. Usa los botones de ruta.</p>';
+    return;
+  }
+  if (pedidoSeleccionado()?.id !== p.id || !mapaPanel.contenedor.isConnected) return;
+
+  if (!mapaPanel.mapa) {
+    mapaPanel.mapa = crearMapa(L, mapaPanel.contenedor, { centro: p.ubicacion, zoom: 15 });
+    mapaPanel.local = L.marker([LOCAL.lat, LOCAL.lng], { icon: icono(L, 'local'), title: 'Delicia China', keyboard: false }).addTo(mapaPanel.mapa);
+    mapaPanel.cliente = L.marker([p.ubicacion.lat, p.ubicacion.lng], { icon: icono(L, 'cliente'), title: 'Cliente', keyboard: false }).addTo(mapaPanel.mapa);
+  }
+  mapaPanel.mapa.invalidateSize();
+  if (mapaPanel.pedidoId !== p.id) {
+    mapaPanel.pedidoId = p.id;
+    mapaPanel.cliente.setLatLng([p.ubicacion.lat, p.ubicacion.lng]);
+    mapaPanel.mapa.fitBounds(
+      [
+        [LOCAL.lat, LOCAL.lng],
+        [p.ubicacion.lat, p.ubicacion.lng],
+      ],
+      { padding: [36, 36], maxZoom: 17 },
+    );
+  }
+  // En celular el detalle aparece con una pequeña demora: recalcular el tamaño.
+  setTimeout(() => mapaPanel.mapa?.invalidateSize(), 80);
 }
 
 function htmlAcciones(p) {

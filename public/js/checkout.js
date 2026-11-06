@@ -3,6 +3,7 @@
 
 import { NOMBRES_PAGO } from './config.js';
 import { consultarEstado, enviarPedido } from './datos.js';
+import { iniciarUbicacionCliente } from './ubicacion-cliente.js';
 
 const CLAVE_CLIENTE = 'delicia-china:cliente';
 const CLAVE_SEGUIMIENTO = 'delicia-china:ultimo-pedido';
@@ -42,6 +43,7 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
     direccion: $('#f-direccion'),
     notas: $('#f-notas'),
     notaDomicilio: $('#nota-domicilio-pedido'),
+    bloqueUbicacion: $('#bloque-ubicacion'),
     metodos: $('#metodos-pago'),
     datosPago: $('#datos-pago'),
     archivo: $('#f-comprobante'),
@@ -66,6 +68,7 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
   let ultimo = leerSeguimiento(); // último pedido enviado desde este navegador
   let enviando = false;
   let temporizador = null;
+  const ubicacion = iniciarUbicacionCliente();
 
   rellenarCliente();
   pintarMetodos();
@@ -148,6 +151,7 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
     const domicilio = f.form.elements.entrega.value === 'domicilio';
     f.campoDireccion.hidden = !domicilio;
     f.notaDomicilio.hidden = !domicilio;
+    f.bloqueUbicacion.hidden = !domicilio;
     if (!domicilio) limpiarError('direccion');
   }
 
@@ -255,6 +259,7 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
       metodoPago: f.form.elements.metodo.value,
       comprobante,
       lineas,
+      ubicacion: tipoEntrega === 'domicilio' ? ubicacion.valor() : null,
     };
 
     try {
@@ -279,6 +284,7 @@ export function iniciarCheckout({ datos, carrito, platosPorId, pesos, escapar, a
       pintarListo();
       carrito.vaciar();
       quitarComprobanteSilencioso();
+      ubicacion.limpiar();
       f.notas.value = '';
       mostrarListo();
     } catch (error) {
